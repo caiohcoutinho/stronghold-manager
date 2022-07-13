@@ -1,0 +1,2 @@
+# stronghold-manager
+stronghold-manager
