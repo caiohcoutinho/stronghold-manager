@@ -8,7 +8,9 @@ app.get('/', function(req, res) {
 
 app.use(express.static(path.join(__dirname, 'static')));
 
-var server = app.listen(8081, function () {
+const port = process.env.PORT || 8080
+
+var server = app.listen(port, function () {
    var host = server.address().address
    var port = server.address().port
 
