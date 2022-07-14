@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sample Site</title>
+    <title>Stronhold Manager</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <style>
         body { padding-top: 50px; }
     </style>
 </head>
 <script src="/lib/vue.global.js"></script>
+<script src="/lib/google.client.js"></script>
 <script type="importmap">
   {
     "imports": {
@@ -17,20 +18,13 @@
   }
 </script>
 
-<h1>Welcome</h1>
+<div id="app"></div>
 
-<div id="app">{{ message }}</div>
-
-<script>
+<script type="module">
   const { createApp } = Vue
+  import Landing from './components/landing.js'
 
-  createApp({
-    data() {
-      return {
-        message: 'Hello Vue!'
-      }
-    }
-  }).mount('#app')
+  createApp(Landing).mount('#app')
 </script>
 
 <body>
