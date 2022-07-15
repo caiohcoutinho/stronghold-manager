@@ -1,27 +1,41 @@
-window.onLogin = function(){
-    alert("onLogin");
+function handleCredentialResponse(response) {
+  console.log("Encoded JWT ID token: " + response.credential);
+  let responsePayload = parseJwt(response.credential);
+
+   console.log("ID: " + responsePayload.sub);
+   console.log('Full Name: ' + responsePayload.name);
+   console.log('Given Name: ' + responsePayload.given_name);
+   console.log('Family Name: ' + responsePayload.family_name);
+   console.log("Image URL: " + responsePayload.picture);
+   console.log("Email: " + responsePayload.email);
 }
+
+function parseJwt (token) {
+    var base64Url = token.split('.')[1];
+    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+};
 
 export default {
     data() {
       return {}
     },
+    mounted: function (){
+      google.accounts.id.initialize({
+        client_id: "240439775239-khrfib64ndsij9nndeoprqrg1gkogn4r.apps.googleusercontent.com",
+        callback: handleCredentialResponse
+      });
+      google.accounts.id.renderButton(
+        document.getElementById("buttonDiv"),
+        { theme: "outline", size: "large" }  // customization attributes
+      );
+    },
     template:
     `
-        <div id="g_id_onload"
-             data-client_id="240439775239-khrfib64ndsij9nndeoprqrg1gkogn4r.apps.googleusercontent.com"
-             data-context="signin"
-             data-ux_mode="popup"
-             data-auto_prompt="false">
-        </div>
-
-        <div class="g_id_signin"
-             data-type="standard"
-             data-shape="rectangular"
-             data-theme="outline"
-             data-text="$ {button.text}"
-             data-size="large"
-             data-logo_alignment="left">
-        </div>
+        <div id="buttonDiv"></div>
     `
 }

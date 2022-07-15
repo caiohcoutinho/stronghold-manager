@@ -9,7 +9,8 @@
     </style>
 </head>
 <script src="/lib/vue.global.js"></script>
-<script src="/lib/google.client.js"></script>
+<script src="/lib/vuex.global.js"></script>
+<script src="/lib/google.gsi.client.js" async defer></script>
 <script type="importmap">
   {
     "imports": {
@@ -21,10 +22,16 @@
 <div id="app"></div>
 
 <script type="module">
-  const { createApp } = Vue
+  const { createApp } = Vue;
+
+  import { createStrongStore } from './components/strongStore.js'
+
   import Landing from './components/landing.js'
 
-  createApp(Landing).mount('#app')
+  const app = createApp(Landing);
+  const store = createStrongStore();
+  app.use(store);
+  app.mount('#app');
 </script>
 
 <body>
