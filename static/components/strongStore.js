@@ -4,12 +4,16 @@ export function createStrongStore() {
   const store = createStore({
       state () {
         return {
-          count: 0
+          loggedUser: null,
+          selectedView: null,
         }
       },
       mutations: {
-        increment (state) {
-          state.count++
+        loginUser (state, payload) {
+          state.loggedUser = payload.userId;
+        },
+        selectView (state, viewName) {
+            state.selectedView = viewName;
         }
       }
     });

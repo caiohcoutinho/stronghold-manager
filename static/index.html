@@ -7,6 +7,7 @@
     <style>
         body { padding-top: 50px; }
     </style>
+    <link rel="stylesheet" href="./components/landing/landing.css">
 </head>
 <script src="/lib/vue.global.js"></script>
 <script src="/lib/vuex.global.js"></script>
@@ -26,7 +27,7 @@
 
   import { createStrongStore } from './components/strongStore.js'
 
-  import Landing from './components/landing.js'
+  import Landing from './components/landing/landing.js'
 
   const app = createApp(Landing);
   const store = createStrongStore();
