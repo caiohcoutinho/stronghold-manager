@@ -11,6 +11,10 @@ app.get('/', function(req, res) {
   res.sendFile(path.join(__dirname, 'static/index.html'));
 });
 
+app.get('/components/profile.js', function(req, res) {
+  res.sendFile(path.join(__dirname, 'static/components/profile'+ (process.env.LOCAL ? '-local' : '') +'.js'));
+});
+
 app.use(express.static(path.join(__dirname, 'static')));
 
 const port = process.env.PORT || 8080
