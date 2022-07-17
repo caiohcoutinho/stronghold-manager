@@ -8,10 +8,12 @@
         body { padding-top: 50px; }
     </style>
     <link rel="stylesheet" href="./components/landing/landing.css">
+    <link rel="stylesheet" href="./lib/bootstrap.min.css">
 </head>
 <script src="/lib/vue.global.js"></script>
 <script src="/lib/vuex.global.js"></script>
 <script src="/lib/google.gsi.client.js" async defer></script>
+<script src="/lib/bootstrap.min.js"></script>
 <script type="importmap">
   {
     "imports": {
@@ -20,7 +22,9 @@
   }
 </script>
 
-<div id="app"></div>
+<body class="body">
+    <div id="app"></div>
+</body>
 
 <script type="module">
   const { createApp } = Vue;

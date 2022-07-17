@@ -1,3 +1,44 @@
+* {
+    color: white;
+}
+
+body.body {
+    padding: 0px;
+}
+
+div.root {
+    position: absolute;
+    height: 100%;
+    padding: 0px;
+    background-color: #2D142C;
+}
+
+table.main-table {
+    height: 100%;
+    width: 100%;
+    padding: 0px;
+}
+
+table.main-table td.layout-columns {
+    padding: 0px;
+}
+
 li.selected {
     font-weight: bold;
+}
+
+div.menu-bar {
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-top: 10%;
+    margin-bottom: 10%;
+    background-color: #510A32;
+    height: 80%;
+    width: 90%;
+    border-radius: 40px;
+}
+
+div.inner-menu-bar {
+    padding-top: 5%;
+    padding-left: 10%;
 }
