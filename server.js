@@ -1,5 +1,45 @@
 var express = require('express');
+var session = require('express-session');
+var fs = require("fs");
+var csrf = require('csurf');
+var _ = require('underscore');
+
 var app = express();
+
+const htmlRenderer = function(path, view_options, callback){
+    let props = view_options.properties;
+    let str = fs.readFileSync(path).toString();
+    _.each(_.pairs(props),  (pair) => {
+        str = str.replace(new RegExp('#{'+pair[0]+'}', 'g'), pair[1]);
+    });
+    callback(str);
+}
+
+app.engine('html', htmlRenderer);
+
+// creating 2 hours from milliseconds
+const twoHours = 1000 * 60 * 60 * 2;
+const threeSecond = 1000 * 3;
+
+//session middleware
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    saveUninitialized: true,
+    cookie: { maxAge: twoHours },
+    resave: false,
+    rolling: true
+}));
+
+
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
+
+app.use(express.json());
+
+app.use(csrf());
 
 const { Pool, Client } = require('pg')
 
@@ -7,8 +47,18 @@ const pool = new Pool({max: 200});
 
 const path = require('path');
 
+const validateCsrfToken = function(req, requestCrsfToken) {
+    if(req.session.csrfToken !== requestCrsfToken) {
+        throw new Error("Invalid CSRF Token");
+    }
+}
+
 app.get('/', function(req, res) {
-  res.sendFile(path.join(__dirname, 'static/index.html'));
+  if (req.session.csrfToken == undefined){
+    req.session.csrfToken = req.csrfToken();
+  }
+  res.render(path.join(__dirname, 'static/index.html'),
+        {properties: {csrfToken: req.session.csrfToken}});
 });
 
 app.get('/components/profile.js', function(req, res) {
@@ -52,4 +102,11 @@ const queryFullTable = function(tableName, response) {
 app.get('/stronghold', function(req, res) {
     res.setHeader('Content-Type', 'application/json');
     queryFullTable("stronghold", res);
+});
+
+app.post('/stronghold', function(req, res) {
+    res.setHeader('Content-Type', 'application/json');
+    let body = req.body;
+    validateCsrfToken(req, body.csrfToken);
+    res.send("OK");
 });
