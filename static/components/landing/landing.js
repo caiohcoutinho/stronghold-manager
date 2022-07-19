@@ -1,6 +1,7 @@
 import Profile from '../profile.js';
-import MainView from '../mainView.js';
+import MainView from '../mainView/mainView.js';
 import { VIEWS } from '../constants.js';
+import AlertsView from '../alerts/alertsView.js'
 
 export default {
     data() {
@@ -15,7 +16,8 @@ export default {
     },
     components: {
         Profile,
-        MainView
+        MainView,
+        AlertsView
     },
     created() {
         this.VIEWS = VIEWS;
@@ -45,6 +47,7 @@ export default {
                     </td>
                     <td class="layout-columns col-md-10">
                         <MainView/>
+                        <AlertsView/>
                     </td>
                 </tr>
             </table>

@@ -1,0 +1,15 @@
+div.alert-danger {
+    --bs-alert-color: white;
+    --bs-alert-bg: #c72c41;
+    --bs-alert-border-color: #c72c41;
+    font-size: small;
+    margin: 3%;
+}
+
+div.alertsArea {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 30%;
+    height: 100%;
+}

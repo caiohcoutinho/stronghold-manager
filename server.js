@@ -12,7 +12,7 @@ const htmlRenderer = function(path, view_options, callback){
     _.each(_.pairs(props),  (pair) => {
         str = str.replace(new RegExp('#{'+pair[0]+'}', 'g'), pair[1]);
     });
-    callback(str);
+    callback(null, str);
 }
 
 app.engine('html', htmlRenderer);
@@ -57,6 +57,9 @@ app.get('/', function(req, res) {
   if (req.session.csrfToken == undefined){
     req.session.csrfToken = req.csrfToken();
   }
+  res.header('Content-type', 'text/html');
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   res.render(path.join(__dirname, 'static/index.html'),
         {properties: {csrfToken: req.session.csrfToken}});
 });
@@ -85,6 +88,10 @@ const logDebug = function(object){
 
 const logError = function(object){
     log("ERROR", object);
+}
+
+const logInfo = function(object){
+    log("INFO", object);
 }
 
 const queryFullTable = function(tableName, response) {

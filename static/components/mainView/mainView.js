@@ -1,5 +1,6 @@
-import { VIEWS } from './constants.js';
-import Stronghold from './stronghold.js'
+import { VIEWS } from '../constants.js';
+import Stronghold from '../stronghold.js'
+import Logs from '../logsView.js'
 
 export default {
     computed: {
@@ -16,10 +17,12 @@ export default {
         }
     },
     components: {
-        Stronghold
+        Stronghold,
+        Logs
     },
     template:
     `
         <Stronghold v-if="selectedView == 'STRONGHOLD'"/>
+        <Logs v-if="selectedView == 'LOGS'"/>
     `
 }

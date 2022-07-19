@@ -1,29 +1,19 @@
-function parseJwt (token) {
-    var base64Url = token.split('.')[1];
-    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-
-    return JSON.parse(jsonPayload);
-};
-
 export default {
     data() {
       return {}
     },
     methods:{
         logUser: function(response){
-            console.log("Encoded JWT ID token: " + response.credential);
+            let idToken = response.credential;
             let responsePayload = parseJwt(response.credential);
             let userId = responsePayload.sub;
-            console.log("ID: " + userId);
-            console.log('Full Name: ' + responsePayload.name);
-            console.log('Given Name: ' + responsePayload.given_name);
-            console.log('Family Name: ' + responsePayload.family_name);
-            console.log("Image URL: " + responsePayload.picture);
-            console.log("Email: " + responsePayload.email);
-            this.$store.commit("loginUser", {userId: userId});
+//            console.log("ID: " + userId);
+//            console.log('Full Name: ' + responsePayload.name);
+//            console.log('Given Name: ' + responsePayload.given_name);
+//            console.log('Family Name: ' + responsePayload.family_name);
+//            console.log("Image URL: " + responsePayload.picture);
+//            console.log("Email: " + responsePayload.email);
+            this.$store.commit("loginUser", {idToken: idToken, userId: userId});
         }
     },
     mounted: function (){
