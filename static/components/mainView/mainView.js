@@ -1,5 +1,5 @@
 import { VIEWS } from '../constants.js';
-import Stronghold from '../stronghold.js'
+import Stronghold from '../stronghold/stronghold.js'
 import Logs from '../logsView.js'
 
 export default {
@@ -22,7 +22,9 @@ export default {
     },
     template:
     `
-        <Stronghold v-if="selectedView == 'STRONGHOLD'"/>
-        <Logs v-if="selectedView == 'LOGS'"/>
+        <div class="mainViewDiv">
+            <Stronghold v-if="selectedView == 'STRONGHOLD'"/>
+            <Logs v-if="selectedView == 'LOGS'"/>
+        </div>
     `
 }

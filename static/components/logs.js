@@ -1,5 +1,6 @@
 export const LOG_TYPE_ERROR = 'ERROR';
-export const LOG_TYPES = [LOG_TYPE_ERROR];
+export const LOG_TYPE_INFO = 'INFO';
+export const LOG_TYPES = [LOG_TYPE_ERROR, LOG_TYPE_INFO];
 
 export class Log {
   constructor(type, text) {

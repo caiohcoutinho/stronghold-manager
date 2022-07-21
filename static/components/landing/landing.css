@@ -20,6 +20,7 @@ table.main-table {
 }
 
 table.main-table td.layout-columns {
+    vertical-align: top;
     padding: 0px;
 }
 
@@ -32,8 +33,19 @@ div.menu-bar {
     margin-right: 5%;
     margin-top: 10%;
     margin-bottom: 10%;
-    background-color: #510A32;
+    background-color: #EE4540;
     height: 80%;
+    width: 90%;
+    border-radius: 40px;
+
+}
+
+div.right-bar {
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-top: 10%;
+    margin-bottom: 10%;
+    background-color: #EE4540;
     width: 90%;
     border-radius: 40px;
 }
@@ -41,4 +53,9 @@ div.menu-bar {
 div.inner-menu-bar {
     padding-top: 5%;
     padding-left: 10%;
+}
+
+li.viewLink span.viewLinkSpan:hover{
+    color: #510A32;
+    cursor: pointer;
 }

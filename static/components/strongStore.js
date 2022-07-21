@@ -1,37 +1,37 @@
 const { createStore } = Vuex;
-import { Log, LOG_TYPE_ERROR } from './logs.js'
-import { Alert, ALERT_TYPE_ERROR } from './alerts/alerts.js'
+import { Log, LOG_TYPE_ERROR, LOG_TYPE_INFO } from './logs.js'
+import { Alert, ALERT_TYPE_ERROR, ALERT_TYPE_INFO } from './alerts/alerts.js'
 import { ALERT_FADE_TIME } from './constants.js'
-
-function parseJwt (token) {
-    var base64Url = token.split('.')[1];
-    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-
-    return JSON.parse(jsonPayload);
-};
 
 export function createStrongStore() {
   const store = createStore({
       state () {
         return {
-          idToken: null,
-          userId: null,
+          userProfile: {
+              idToken: null,
+              picture: null,
+              email: null,
+              name: null
+          },
+          hasLoggedOut: false,
           selectedView: null,
           logs: [],
           alerts: [],
           sequence: 0,
+          strongholds: [],
+        }
+      },
+      getters: {
+        hasUserProfile: state => {
+            return state.userProfile.idToken != null;
         }
       },
       mutations: {
-        loginUser (state, payload) {
-            state.idToken = payload.idToken;
-            state.userId = payload.userId;
-        },
         selectView (state, viewName) {
             state.selectedView = viewName;
+        },
+        setStrongholds (state, strongholds) {
+            state.strongholds = strongholds;
         },
         pushLog (state, log) {
             state.logs.push(log);
@@ -44,9 +44,71 @@ export function createStrongStore() {
         },
         incrementSequence (state) {
             state.sequence++;
+        },
+        setUserProfile (state, userProfile) {
+            state.userProfile = userProfile;
+        },
+        deleteUserProfile (state, userProfile) {
+            state.userProfile = {
+                  idToken: null,
+                  picture: null,
+                  email: null,
+                  name: null
+              };
+        },
+        setHasLoggedOut(state) {
+            state.hasLoggedOut = true;
         }
       },
       actions: {
+        handleError ({ dispatch, commit }, error){
+            let response = error.response;
+            let errorMessage = JSON.stringify(error);
+            let logType = LOG_TYPE_ERROR;
+            let alertType = ALERT_TYPE_ERROR;
+            if (response.status == 401 && response.data == 'Unauthorized') {
+                logType = LOG_TYPE_INFO;
+                alertType = ALERT_TYPE_INFO;
+                errorMessage = 'You must be authenticated to access this resource. Please sign in before proceeding.';
+            }
+            commit('pushLog', new Log(logType, errorMessage));
+            dispatch('pushAlert', new Alert(alertType, errorMessage));
+            console.log(error);
+        },
+        loginUser ({state, commit, dispatch}, payload) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios.post('/authenticate', {
+                idToken: payload.idToken,
+                _csrf: csrfToken
+              })
+              .then(function (response) {
+                console.log("User logged successfully");
+                commit('setUserProfile', {
+                    idToken: payload.idToken,
+                    picture: payload.picture,
+                    name: payload.name,
+                    email: payload.email
+                });
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        logOut ({state, commit, dispatch}) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios
+                .post('logout', {
+                    _csrf: csrfToken
+                })
+                .then(function (response) {
+                    console.log("User logged out successfully");
+                    commit('deleteUserProfile');
+                    commit('setHasLoggedOut')
+                  })
+                  .catch(function (error) {
+                    dispatch('handleError', error);
+                  });
+        },
         pushAlert ({state, commit}, alert) {
             let id = state.sequence;
             alert.id = id;
@@ -57,15 +119,12 @@ export function createStrongStore() {
             }, ALERT_FADE_TIME);
         },
         loadStrongholds ({ dispatch, commit }) {
-            axios.get('/user?ID=12345')
+            axios.get('/stronghold')
               .then(function (response) {
-                // handle success
-                console.log(response);
+                commit('setStrongholds', response.data);
               })
               .catch(function (error) {
-                commit('pushLog', new Log(LOG_TYPE_ERROR, JSON.stringify(error)));
-                dispatch('pushAlert', new Alert(ALERT_TYPE_ERROR, JSON.stringify(error)));
-                console.log(error);
+                dispatch('handleError', error);
               });
         }
       }

@@ -1,0 +1,30 @@
+img.profileImage {
+    max-height: 22px;
+    border-radius: 50px;
+    margin-left: 8px
+}
+
+div.right-bar {
+    min-height: 40px;
+}
+
+div.right-bar div#buttonDiv, div.right-bar div.loggedUserProfileDiv {
+    float: right;
+    width: 90%;
+}
+
+div.right-bar div#buttonDiv.hidden {
+    display:none;
+}
+
+table.loggedUserProfileTable td {
+    padding: 5px;
+}
+
+span.logOutLink {
+    cursor: pointer;
+}
+
+span.logOutLink:hover {
+    color: #510A32;
+}

@@ -1,4 +1,4 @@
-import Profile from '../profile.js';
+import Profile from '../profile/profile.js';
 import MainView from '../mainView/mainView.js';
 import { VIEWS } from '../constants.js';
 import AlertsView from '../alerts/alertsView.js'
@@ -12,6 +12,9 @@ export default {
     computed: {
         selectedView() {
             return this.$store.state.selectedView;
+        },
+        hasUserProfile() {
+            return this.$store.getters.hasUserProfile
         }
     },
     components: {
@@ -36,18 +39,22 @@ export default {
                         <div class="menu-bar">
                             <div class="inner-menu-bar">
                                 <ul>
-                                    <li :class="{ selected: view.code == this.selectedView }"
+                                    <li class="viewLink" :class="{ selected: view.code == this.selectedView }"
                                         v-for="view in this.VIEWS" @click="selectView(view.code)">
-                                      {{ view.label }}
+                                      <span class="viewLinkSpan">{{ view.label }}</span>
                                     </li>
                                 </ul>
-                                <Profile/>
                             </div>
                         </div>
                     </td>
-                    <td class="layout-columns col-md-10">
+                    <td class="layout-columns col-md-8">
                         <MainView/>
                         <AlertsView/>
+                    </td>
+                    <td class="layout-columns col-md-2">
+                        <div class="right-bar">
+                            <Profile/>
+                        </div>
                     </td>
                 </tr>
             </table>
