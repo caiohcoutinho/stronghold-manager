@@ -1,6 +1,6 @@
 const { createStore } = Vuex;
-import { Log, LOG_TYPE_ERROR, LOG_TYPE_INFO } from './logs.js'
-import { Alert, ALERT_TYPE_ERROR, ALERT_TYPE_INFO } from './alerts/alerts.js'
+import { Log, LOG_TYPE_ERROR, LOG_TYPE_WARNING, LOG_TYPE_INFO } from './logs.js'
+import { Alert, ALERT_TYPE_ERROR, ALERT_TYPE_WARNING, ALERT_TYPE_INFO } from './alerts/alerts.js'
 import { ALERT_FADE_TIME } from './constants.js'
 
 export function createStrongStore() {
@@ -19,6 +19,7 @@ export function createStrongStore() {
           alerts: [],
           sequence: 0,
           strongholds: [],
+          scenarios: [],
         }
       },
       getters: {
@@ -32,6 +33,9 @@ export function createStrongStore() {
         },
         setStrongholds (state, strongholds) {
             state.strongholds = strongholds;
+        },
+        setScenarios (state, scenarios) {
+            state.scenarios = scenarios;
         },
         pushLog (state, log) {
             state.logs.push(log);
@@ -70,6 +74,12 @@ export function createStrongStore() {
                 logType = LOG_TYPE_INFO;
                 alertType = ALERT_TYPE_INFO;
                 errorMessage = 'You must be authenticated to access this resource. Please sign in before proceeding.';
+            }
+            if (response.status == 500
+                && response.data.includes('violates foreign key constraint "stronghold_scenario_id"')){
+                logType = LOG_TYPE_WARNING;
+                alertType = ALERT_TYPE_WARNING;
+                errorMessage = 'There are strongholds referencing this scenario. Remove the strongholds first.';
             }
             commit('pushLog', new Log(logType, errorMessage));
             dispatch('pushAlert', new Alert(alertType, errorMessage));
@@ -152,7 +162,74 @@ export function createStrongStore() {
               .catch(function (error) {
                 dispatch('handleError', error);
               });
-        }
+        },
+        updateStronghold({dispatch, commit}, stronghold) {
+           stronghold.loading = true;
+           let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+           axios.put('/stronghold',  {
+                 stronghold: stronghold,
+                 _csrf: csrfToken
+             })
+             .then(function (response) {
+               dispatch('loadStrongholds');
+               stronghold.loading = false;
+             })
+             .catch(function (error) {
+               dispatch('handleError', error);
+               stronghold.loading = false;
+             });
+        },
+        loadScenarios ({ dispatch, commit }) {
+            axios.get('/scenario')
+              .then(function (response) {
+                commit('setScenarios', response.data);
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        addNewScenario({dispatch, commit}, payload) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios.post('/scenario',  {
+                  name: payload.name,
+                  _csrf: csrfToken
+              })
+              .then(function (response) {
+                dispatch('loadScenarios');
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        deleteScenario({dispatch, commit}, scenario) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios.delete('/scenario',  { data: {
+                  scenario: scenario,
+                  _csrf: csrfToken
+              }})
+              .then(function (response) {
+                dispatch('loadScenarios');
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        updateScenario({dispatch, commit}, scenario) {
+           scenario.loading = true;
+           let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+           axios.put('/scenario',  {
+                 scenario: scenario,
+                 _csrf: csrfToken
+             })
+             .then(function (response) {
+               dispatch('loadStrongholds');
+               scenario.loading = false;
+             })
+             .catch(function (error) {
+               dispatch('handleError', error);
+               scenario.loading = false;
+             });
+        },
       }
     });
    return store;

@@ -14,9 +14,13 @@ import { v4 as uuidv4 } from 'uuid';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import { SELECT_STRONGHOLD_BY_USER_ID, SELECT_STRONGHOLD_BY_ID_AND_USER_ID,
-    CREATE_STRONGHOLD, DELETE_STRONGHOLD_BY_ID } from './server/repository/stronghold/stronghold_repository.mjs'
 import { SELECT_USER_BY_USER_ID, CREATE_USER } from './server/repository/profile/user_repository.mjs'
+
+import { SELECT_STRONGHOLD_BY_USER_ID, SELECT_STRONGHOLD_BY_ID_AND_USER_ID, UPDATE_STRONGHOLD,
+    CREATE_STRONGHOLD, DELETE_STRONGHOLD_BY_ID } from './server/repository/stronghold/stronghold_repository.mjs'
+
+import { SELECT_SCENARIO_BY_USER_ID, SELECT_SCENARIO_BY_ID_AND_USER_ID, UPDATE_SCENARIO,
+    CREATE_SCENARIO, DELETE_SCENARIO_BY_ID } from './server/repository/scenario/scenario_repository.mjs'
 
 let Pool = pg.Pool;
 
@@ -184,6 +188,28 @@ var server = app.listen(port, function () {
    console.log("Stronghold-Manager running at http://%s:%s", host, port)
 })
 
+const sendQuery = function(response, query, values) {
+    return runQuery(query, values, (result) => {
+        response.send(result.rows);
+    }, (err) => {
+        logError('Error executing query: ' + err);
+        logError(err.stack);
+        response.status(500);
+        response.send('Error executing query: ' + err.stack);
+    });
+}
+
+const runQuery = function(query, values, callback, errorCallback) {
+    return pool
+      .query(query, values)
+      .then(res => {
+        callback(res);
+      })
+      .catch(err => {
+        errorCallback(err);
+      })
+}
+
 app.post('/authenticate', async function(req, res) {
     res.setHeader('Content-Type', 'application/json');
 
@@ -243,6 +269,13 @@ app.get('/stronghold', validateAuthenticated(async function(req, res, idToken) {
     sendQuery(res, SELECT_STRONGHOLD_BY_USER_ID, [idToken.sub]);
 }));
 
+app.put('/stronghold', validateAuthenticated(async function(req, res, idToken) {
+    setHeadersNeverCache(res);
+    res.setHeader('Content-Type', 'application/json');
+    let stronghold = req.body.stronghold;
+    sendQuery(res, UPDATE_STRONGHOLD, [stronghold.id, stronghold.name, stronghold.scenario_id, idToken.sub]);
+}));
+
 app.post('/stronghold', validateAuthenticated(async function(req, res, idToken) {
     res.setHeader('Content-Type', 'application/json');
     sendQuery(res, CREATE_STRONGHOLD, [uuidv4(), req.body.name, idToken.sub]);
@@ -271,24 +304,42 @@ app.delete('/stronghold', validateAuthenticated(async function(req, res, idToken
         });
 }));
 
-const sendQuery = function(response, query, values) {
-    return runQuery(query, values, (result) => {
-        response.send(result.rows);
-    }, (err) => {
-        logError('Error executing query: ' + err);
-        logError(err.stack);
-        response.status(500);
-        response.send('Error executing query: ' + err.stack);
-    });
-}
+app.get('/scenario', validateAuthenticated(async function(req, res, idToken) {
+    setHeadersNeverCache(res);
+    res.setHeader('Content-Type', 'application/json');
+    sendQuery(res, SELECT_SCENARIO_BY_USER_ID, [idToken.sub]);
+}));
 
-const runQuery = function(query, values, callback, errorCallback) {
-    return pool
-      .query(query, values)
-      .then(res => {
-        callback(res);
-      })
-      .catch(err => {
-        errorCallback(err);
-      })
-}
+app.post('/scenario', validateAuthenticated(async function(req, res, idToken) {
+    res.setHeader('Content-Type', 'application/json');
+    sendQuery(res, CREATE_SCENARIO, [uuidv4(), req.body.name, idToken.sub]);
+}));
+
+app.put('/scenario', validateAuthenticated(async function(req, res, idToken) {
+    res.setHeader('Content-Type', 'application/json');
+    let scenario = req.body.scenario;
+    sendQuery(res, UPDATE_SCENARIO, [scenario.id, scenario.name, idToken.sub]);
+}));
+
+app.delete('/scenario', validateAuthenticated(async function(req, res, idToken) {
+    res.setHeader('Content-Type', 'application/json');
+    runQuery(SELECT_SCENARIO_BY_ID_AND_USER_ID, [req.body.scenario.id, idToken.sub],
+        (result) => {
+            let scenarioToDelete = result.rows[0];
+            if(isNullOrUndefined(scenarioToDelete)){
+                logError("Cannot find scenario to delete: "+err);
+                logError(err.stack);
+                res.status(500)
+                res.send("Internal server error");
+                return;
+            }
+            sendQuery(res, DELETE_SCENARIO_BY_ID, [scenarioToDelete.id]);
+        },
+        (err) => {
+            logError("Error while trying to find scenario to delete: "+err);
+            logError(err.stack);
+            res.status(500)
+            res.send("Internal server error");
+            return;
+        });
+}));

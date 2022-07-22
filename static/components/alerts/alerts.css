@@ -7,9 +7,6 @@ div.alert-danger {
 }
 
 div.alertsArea {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 30%;
-    height: 100%;
+    width: 80%;
+    height: 80%;
 }

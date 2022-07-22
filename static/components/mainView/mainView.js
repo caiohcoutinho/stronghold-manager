@@ -1,6 +1,6 @@
 import { VIEWS } from '../constants.js';
 import Stronghold from '../stronghold/stronghold.js'
-import Cenario from '../cenario/cenario.js'
+import Scenario from '../scenario/scenario.js'
 import Logs from '../logsView.js'
 
 export default {
@@ -19,13 +19,14 @@ export default {
     },
     components: {
         Stronghold,
+        Scenario,
         Logs
     },
     template:
     `
         <div class="mainViewDiv">
             <Stronghold v-if="selectedView == 'STRONGHOLD'"/>
-            <Cenario v-if="selectedView == 'CENARIO'"/>
+            <Scenario v-if="selectedView == 'SCENARIO'"/>
             <Logs v-if="selectedView == 'LOGS'"/>
         </div>
     `

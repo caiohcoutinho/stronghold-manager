@@ -49,12 +49,12 @@ export default {
                     </td>
                     <td class="layout-columns col-md-8">
                         <MainView/>
-                        <AlertsView/>
                     </td>
                     <td class="layout-columns col-md-2">
                         <div class="right-bar">
                             <Profile/>
                         </div>
+                        <AlertsView/>
                     </td>
                 </tr>
             </table>

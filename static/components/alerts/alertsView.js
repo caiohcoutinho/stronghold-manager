@@ -1,5 +1,5 @@
-import { Log, LOG_TYPE_ERROR, LOG_TYPE_INFO } from '../logs.js'
-import { Alert, ALERT_TYPE_ERROR, ALERT_TYPE_INFO } from '../alerts/alerts.js'
+import { Log, LOG_TYPE_ERROR, LOG_TYPE_WARNING, LOG_TYPE_INFO } from '../logs.js'
+import { Alert, ALERT_TYPE_ERROR, ALERT_TYPE_WARNING, ALERT_TYPE_INFO } from '../alerts/alerts.js'
 
 export default {
     computed: {
@@ -16,6 +16,8 @@ export default {
                 return 'alert-danger';
               case ALERT_TYPE_INFO:
                 return 'alert-info';
+              case ALERT_TYPE_WARNING:
+                return 'alert-warning';
               default:
                 return 'alert-light';
             }
@@ -24,7 +26,7 @@ export default {
     mounted: function(){
     },
     components: {
-        ALERT_TYPE_INFO, ALERT_TYPE_ERROR
+        ALERT_TYPE_INFO, ALERT_TYPE_WARNING, ALERT_TYPE_ERROR
     },
     template:
     `
@@ -32,7 +34,7 @@ export default {
             <div v-for="alert in alerts"
                 class="alert alert-dismissible fade show"
                 role="alert" :class="[getAlertClass(alert)]">
-              <strong>#{{alert.id}} Error</strong>: {{alert.text}}.
+              <strong>#{{alert.id}} Error</strong>: {{alert.text}}
               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         </div>

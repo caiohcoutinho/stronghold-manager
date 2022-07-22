@@ -1,6 +1,7 @@
 export const ALERT_TYPE_ERROR = 'ERROR';
+export const ALERT_TYPE_WARNING = 'WARNING';
 export const ALERT_TYPE_INFO = 'INFO';
-export const ALERT_TYPES = [ALERT_TYPE_ERROR, ALERT_TYPE_INFO];
+export const ALERT_TYPES = [ALERT_TYPE_ERROR, ALERT_TYPE_WARNING, ALERT_TYPE_INFO];
 import { ALERT_MAX_SIZE } from '../constants.js';
 
 export class Alert {
