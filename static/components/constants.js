@@ -10,7 +10,9 @@ export const DATE = new View('DATE', 'Date');
 export const STRONGHOLD = new View('STRONGHOLD', 'Strongholds');
 export const LOGS = new View('LOGS', 'Logs');
 export const SCENARIO = new View('SCENARIO', 'Scenario');
-export const VIEWS = [SCENARIO, STRONGHOLD, RESOURCE, RECIPE, WORKER, DATE, LOGS];
+export const DASHBOARD = new View('DASHBOARD', 'Dashboard');
+
+export const VIEWS = [DASHBOARD, SCENARIO, STRONGHOLD, RESOURCE, RECIPE, WORKER, DATE, LOGS];
 
 export const ALERT_MAX_SIZE = 400;
 export const ALERT_FADE_TIME = 10 * 1000;

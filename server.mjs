@@ -16,6 +16,9 @@ const __dirname = dirname(__filename);
 
 import { SELECT_USER_BY_USER_ID, CREATE_USER } from './server/repository/profile/user_repository.mjs'
 
+import { SELECT_RESOURCE_BY_USER_ID, SELECT_RESOURCE_BY_ID_AND_USER_ID, UPDATE_RESOURCE,
+    CREATE_RESOURCE, DELETE_RESOURCE_BY_ID } from './server/repository/resource/resource_repository.mjs'
+
 import { SELECT_STRONGHOLD_BY_USER_ID, SELECT_STRONGHOLD_BY_ID_AND_USER_ID, UPDATE_STRONGHOLD,
     CREATE_STRONGHOLD, DELETE_STRONGHOLD_BY_ID } from './server/repository/stronghold/stronghold_repository.mjs'
 
@@ -337,6 +340,46 @@ app.delete('/scenario', validateAuthenticated(async function(req, res, idToken) 
         },
         (err) => {
             logError("Error while trying to find scenario to delete: "+err);
+            logError(err.stack);
+            res.status(500)
+            res.send("Internal server error");
+            return;
+        });
+}));
+
+app.get('/resource', validateAuthenticated(async function(req, res, idToken) {
+    setHeadersNeverCache(res);
+    res.setHeader('Content-Type', 'application/json');
+    sendQuery(res, SELECT_RESOURCE_BY_USER_ID, [idToken.sub]);
+}));
+
+app.post('/resource', validateAuthenticated(async function(req, res, idToken) {
+    res.setHeader('Content-Type', 'application/json');
+    sendQuery(res, CREATE_RESOURCE, [uuidv4(), req.body.name, idToken.sub]);
+}));
+
+app.put('/resource', validateAuthenticated(async function(req, res, idToken) {
+    res.setHeader('Content-Type', 'application/json');
+    let resource = req.body.resource;
+    sendQuery(res, UPDATE_RESOURCE, [resource.id, resource.name, resource.scenario_id, idToken.sub]);
+}));
+
+app.delete('/resource', validateAuthenticated(async function(req, res, idToken) {
+    res.setHeader('Content-Type', 'application/json');
+    runQuery(SELECT_RESOURCE_BY_ID_AND_USER_ID, [req.body.resource.id, idToken.sub],
+        (result) => {
+            let resourceToDelete = result.rows[0];
+            if(isNullOrUndefined(resourceToDelete)){
+                logError("Cannot find resource to delete: "+err);
+                logError(err.stack);
+                res.status(500)
+                res.send("Internal server error");
+                return;
+            }
+            sendQuery(res, DELETE_RESOURCE_BY_ID, [resourceToDelete.id]);
+        },
+        (err) => {
+            logError("Error while trying to find resource to delete: "+err);
             logError(err.stack);
             res.status(500)
             res.send("Internal server error");

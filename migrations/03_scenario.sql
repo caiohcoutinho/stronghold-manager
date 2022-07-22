@@ -4,7 +4,7 @@ CREATE TABLE public.scenario
     name character varying(255) NOT NULL,
     owner_id character varying(255) NOT NULL,
     PRIMARY KEY (id),
-    CONSTRAINT cenario_owner_id_user_id FOREIGN KEY (owner_id)
+    CONSTRAINT scenario_owner_id_user_id FOREIGN KEY (owner_id)
         REFERENCES public.stronghold_user (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION

@@ -37,6 +37,9 @@ export function createStrongStore() {
         setScenarios (state, scenarios) {
             state.scenarios = scenarios;
         },
+        setResources (state, resources) {
+            state.resources = resources;
+        },
         pushLog (state, log) {
             state.logs.push(log);
         },
@@ -228,6 +231,57 @@ export function createStrongStore() {
              .catch(function (error) {
                dispatch('handleError', error);
                scenario.loading = false;
+             });
+        },
+        loadResources ({ dispatch, commit }) {
+            axios.get('/resource')
+              .then(function (response) {
+                commit('setResources', response.data);
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        addNewResource({dispatch, commit}, payload) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios.post('/resource',  {
+                  name: payload.name,
+                  _csrf: csrfToken
+              })
+              .then(function (response) {
+                dispatch('loadResources');
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        deleteResource({dispatch, commit}, resource) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios.delete('/resource',  { data: {
+                  resource: resource,
+                  _csrf: csrfToken
+              }})
+              .then(function (response) {
+                dispatch('loadResources');
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        updateResource({dispatch, commit}, resource) {
+           resource.loading = true;
+           let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+           axios.put('/resource',  {
+                 resource: resource,
+                 _csrf: csrfToken
+             })
+             .then(function (response) {
+               dispatch('loadResources');
+               resource.loading = false;
+             })
+             .catch(function (error) {
+               dispatch('handleError', error);
+               resource.loading = false;
              });
         },
       }
