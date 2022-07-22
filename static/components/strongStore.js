@@ -84,6 +84,18 @@ export function createStrongStore() {
                 alertType = ALERT_TYPE_WARNING;
                 errorMessage = 'There are strongholds referencing this scenario. Remove the strongholds first.';
             }
+            if (response.status == 500
+                && response.data.includes('violates foreign key constraint "resource_scenario_id"')){
+                logType = LOG_TYPE_WARNING;
+                alertType = ALERT_TYPE_WARNING;
+                errorMessage = 'There are resources referencing this scenario. Remove the resources first.';
+            }
+            if (response.status == 500
+                && response.data.includes('violates foreign key constraint "recipe_scenario_id"')){
+                logType = LOG_TYPE_WARNING;
+                alertType = ALERT_TYPE_WARNING;
+                errorMessage = 'There are recipes referencing this scenario. Remove the recipe first.';
+            }
             commit('pushLog', new Log(logType, errorMessage));
             dispatch('pushAlert', new Alert(alertType, errorMessage));
             console.log(error);

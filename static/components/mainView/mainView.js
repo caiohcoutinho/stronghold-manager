@@ -2,6 +2,7 @@ import { VIEWS } from '../constants.js';
 import Stronghold from '../stronghold/stronghold.js'
 import Scenario from '../scenario/scenario.js'
 import Resource from '../resource/resource.js'
+import Recipe from '../recipe/recipe.js'
 import Logs from '../logsView.js'
 
 export default {
@@ -22,6 +23,7 @@ export default {
         Stronghold,
         Scenario,
         Resource,
+        Recipe,
         Logs
     },
     template:
