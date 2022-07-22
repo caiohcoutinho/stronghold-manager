@@ -9,12 +9,16 @@ import path from 'path';
 import _ from 'underscore';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+import { SELECT_STRONGHOLD_BY_USER_ID, SELECT_STRONGHOLD_BY_ID_AND_USER_ID,
+    CREATE_STRONGHOLD, DELETE_STRONGHOLD_BY_ID } from './server/repository/stronghold/stronghold_repository.mjs'
+import { SELECT_USER_BY_USER_ID, CREATE_USER } from './server/repository/profile/user_repository.mjs'
+
 let Pool = pg.Pool;
-let Client = pg.Client;
 
 const app = express();
 
@@ -112,6 +116,14 @@ const isNullOrUndefined = function(obj) {
 }
 
 const validateIdToken = async function(idToken) {
+    if (process.env.LOCAL){
+        return {
+           sub: "1234abcd-1234-abcd-1234-abcd1234abcd",
+           email: 'test_user@gmail.com',
+           name: 'Goofy Goofest',
+           picture: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDEzLQIYir3TKubuEpEgSS3mMWvKbUtPbPzzcKV0V3ai2Jq4FLsL6Kno0aD3H1R34xzsM&usqp=CAU'
+        }
+    }
     if(areKeysExpired){
         await refreshGoogleKeys();
     }
@@ -172,30 +184,8 @@ var server = app.listen(port, function () {
    console.log("Stronghold-Manager running at http://%s:%s", host, port)
 })
 
-const queryFullTable = function(tableName, response) {
-    logDebug("tableName = "+tableName);
-    pool
-      .query('SELECT * FROM ' + tableName)
-      .then(res => {
-        response.send(res.rows);
-      })
-      .catch(err => {
-        logError('Error executing query: ' + err);
-        logError(err.stack);
-        response.status(500);
-        response.send('Error executing query: ' + err.stack);
-      })
-}
-
 app.post('/authenticate', async function(req, res) {
     res.setHeader('Content-Type', 'application/json');
-
-    if(process.env.LOCAL){
-        logDebug("Local testing user");
-        req.session.parsedToken = {};
-        res.send("OK");
-        return;
-    }
 
     let body = req.body;
     let idToken = body.idToken;
@@ -203,10 +193,37 @@ app.post('/authenticate', async function(req, res) {
     if(isNullOrUndefined(parsedToken)) {
         res.status(401)
         res.send("Unauthorized");
-    } else {
-        req.session.parsedToken = parsedToken;
-        res.send("OK");
+        return;
     }
+    runQuery(SELECT_USER_BY_USER_ID, [parsedToken.sub], (result) => {
+       if(_.isEmpty(result.rows)){
+            logDebug("User don't exist. Creating.");
+            runQuery(CREATE_USER,
+                [parsedToken.sub, parsedToken.name, parsedToken.email, parsedToken.picture],
+                (result2) => {
+                   req.session.parsedToken = parsedToken;
+                   res.send("OK");
+                   return;
+                },
+                (err) => {
+                    logError("Error while creating user: "+err);
+                    logError(err.stack);
+                    res.status(500)
+                    res.send("Internal server error");
+                    return;
+                });
+       } else {
+           req.session.parsedToken = parsedToken;
+           res.send("OK");
+           return;
+       }
+    }, (err) => {
+        logError("Error while trying get check existing user: "+err);
+        logError(err.stack);
+        res.status(500)
+        res.send("Internal server error");
+        return;
+    });
 });
 
 app.post('/logout', async function(req, res){
@@ -223,10 +240,55 @@ app.post('/logout', async function(req, res){
 app.get('/stronghold', validateAuthenticated(async function(req, res, idToken) {
     setHeadersNeverCache(res);
     res.setHeader('Content-Type', 'application/json');
-    queryFullTable("stronghold", res);
+    sendQuery(res, SELECT_STRONGHOLD_BY_USER_ID, [idToken.sub]);
 }));
 
 app.post('/stronghold', validateAuthenticated(async function(req, res, idToken) {
     res.setHeader('Content-Type', 'application/json');
-    res.send("OK");
+    sendQuery(res, CREATE_STRONGHOLD, [uuidv4(), req.body.name, idToken.sub]);
 }));
+
+app.delete('/stronghold', validateAuthenticated(async function(req, res, idToken) {
+    res.setHeader('Content-Type', 'application/json');
+    runQuery(SELECT_STRONGHOLD_BY_ID_AND_USER_ID, [req.body.stronghold.id, idToken.sub],
+        (result) => {
+            let strongholdToDelete = result.rows[0];
+            if(isNullOrUndefined(strongholdToDelete)){
+                logError("Cannot find stronghold to delete: "+err);
+                logError(err.stack);
+                res.status(500)
+                res.send("Internal server error");
+                return;
+            }
+            sendQuery(res, DELETE_STRONGHOLD_BY_ID, [strongholdToDelete.id]);
+        },
+        (err) => {
+            logError("Error while trying to find stronghold to delete: "+err);
+            logError(err.stack);
+            res.status(500)
+            res.send("Internal server error");
+            return;
+        });
+}));
+
+const sendQuery = function(response, query, values) {
+    return runQuery(query, values, (result) => {
+        response.send(result.rows);
+    }, (err) => {
+        logError('Error executing query: ' + err);
+        logError(err.stack);
+        response.status(500);
+        response.send('Error executing query: ' + err.stack);
+    });
+}
+
+const runQuery = function(query, values, callback, errorCallback) {
+    return pool
+      .query(query, values)
+      .then(res => {
+        callback(res);
+      })
+      .catch(err => {
+        errorCallback(err);
+      })
+}

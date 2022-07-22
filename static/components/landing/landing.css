@@ -26,6 +26,9 @@ table.main-table td.layout-columns {
 
 li.selected {
     font-weight: bold;
+}td svg {
+    width: 16px;
+    height: 16px;
 }
 
 div.menu-bar {

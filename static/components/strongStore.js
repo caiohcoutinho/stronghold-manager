@@ -126,6 +126,32 @@ export function createStrongStore() {
               .catch(function (error) {
                 dispatch('handleError', error);
               });
+        },
+        addNewStronghold({dispatch, commit}, payload) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios.post('/stronghold',  {
+                  name: payload.name,
+                  _csrf: csrfToken
+              })
+              .then(function (response) {
+                dispatch('loadStrongholds');
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        deleteStronghold({dispatch, commit}, stronghold) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios.delete('/stronghold',  { data: {
+                  stronghold: stronghold,
+                  _csrf: csrfToken
+              }})
+              .then(function (response) {
+                dispatch('loadStrongholds');
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
         }
       }
     });

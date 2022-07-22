@@ -11,3 +11,10 @@ WITH (
 
 ALTER TABLE public.stronghold
     OWNER to "stronghold-manager";
+
+ALTER TABLE public.stronghold
+    ADD CONSTRAINT stronghold_owner_id_user_id FOREIGN KEY (owner_id)
+    REFERENCES public.stronghold_user (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+

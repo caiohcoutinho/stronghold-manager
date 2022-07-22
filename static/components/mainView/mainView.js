@@ -1,5 +1,6 @@
 import { VIEWS } from '../constants.js';
 import Stronghold from '../stronghold/stronghold.js'
+import Cenario from '../cenario/cenario.js'
 import Logs from '../logsView.js'
 
 export default {
@@ -24,6 +25,7 @@ export default {
     `
         <div class="mainViewDiv">
             <Stronghold v-if="selectedView == 'STRONGHOLD'"/>
+            <Cenario v-if="selectedView == 'CENARIO'"/>
             <Logs v-if="selectedView == 'LOGS'"/>
         </div>
     `
