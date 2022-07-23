@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/caiohcoutinho/stronghold-manager#readme",
   "dependencies": {
+    "@ckpack/vue-color": "^1.2.0",
     "axios": "^0.27.2",
     "body-parser": "^1.20.0",
     "cookie-parser": "^1.4.6",
