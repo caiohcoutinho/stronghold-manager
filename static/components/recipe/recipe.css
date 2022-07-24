@@ -12,7 +12,7 @@ td span.addNewButton:hover svg{
     filter: invert(58%) sepia(74%) saturate(6472%) hue-rotate(340deg) brightness(99%) contrast(88%);
 }
 
-span.deleteResourceButton:hover {
+span.deleteRecipeButton:hover {
     cursor: pointer;
     color: #EE4540;
 }
@@ -21,7 +21,7 @@ div.modal-content {
     background-color: #EE4540;
 }
 
-td span.deleteResourceButton:hover svg{
+td span.deleteRecipeButton:hover svg{
     filter: invert(58%) sepia(74%) saturate(6472%) hue-rotate(340deg) brightness(99%) contrast(88%);
 }
 

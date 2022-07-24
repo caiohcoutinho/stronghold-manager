@@ -7,8 +7,8 @@ export const SELECT_RESOURCE_BY_USER_ID = `
 
 export const UPDATE_RESOURCE = `
     UPDATE resource
-    SET name = $2, scenario_id = $3
-    WHERE id = $1 AND owner_id = $4
+    SET name = $3, scenario_id = $4, icon = $5, hex = $6, filter = $7
+    WHERE id = $1 AND owner_id = $2
 `;
 
 export const SELECT_RESOURCE_BY_ID_AND_USER_ID = `

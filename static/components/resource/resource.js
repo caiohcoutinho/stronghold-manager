@@ -10,7 +10,7 @@ export default {
         return {
             modal: null,
             selectedResource: null,
-            color: {hex: '#194d33'},
+            color: {hex: '#ffffff'},
             icon: null,
             filter: null
         }
@@ -33,6 +33,15 @@ export default {
         Sketch, CustomIcon, ICON_TYPES
     },
     methods: {
+        finishIconEdition(){
+            this.selectedResource.icon = this.icon;
+            this.selectedResource.hex = this.color.hex;
+            this.selectedResource.filter = this.filter;
+            this.icon = null;
+            this.color = {hex: '#ffffff'};
+            this.filter = null;
+            this.$store.dispatch('updateResource', this.selectedResource);
+        },
         calculateFilter(){
             const rgb = this.hexToRgb(this.color.hex);
             const color = new Color(rgb[0], rgb[1], rgb[2]);
@@ -82,13 +91,17 @@ export default {
               }, TEXT_INPUT_THROTTLE);
         })(),
         updateResourceScenario(resource) {
-            this.$store.dispatch('updateResource', resource);;
+            this.$store.dispatch('updateResource', resource);
         },
         editIcon(resource){
             this.selectedResource = resource;
-            this.color = {hex: '#194d33'};
-            this.icon = null;
-            this.calculateFilter();
+            this.color = {hex: resource.hex ? resource.hex : '#ffffff'};
+            this.icon = resource.icon;
+            if(resource.filter){
+                this.filter = resource.filter;
+            } else {
+                this.calculateFilter();
+            }
             this.modal = new bootstrap.Modal(document.getElementById('iconEdition'));
             this.modal.show();
         }
@@ -131,7 +144,10 @@ export default {
                         <span v-if="resource.loading" class="loadingIcon"><img class="loadingImg" src="/components/loading.gif"/></span>
                     </td>
                     <td><input type="text" v-model="resource.name" @input="updateResourceName(resource)"/></td>
-                    <td><button type="button" class="btn btn-link" @click="editIcon(resource)">Editar</button></td>
+                    <td class="resourceIcon">
+                        <CustomIcon :filter="resource.filter" :type="resource.icon"/>
+                        <button type="button" class="btn btn-link" @click="editIcon(resource)">Editar</button>
+                    </td>
                     <td class="scenarioSelectTd">
                         <select class="form-select scenarioSelect" aria-label="Default select example"
                             v-model="resource.scenario_id" @change="updateResourceScenario(resource)">
@@ -181,9 +197,10 @@ export default {
                   <div class="modal-body">
                     <table class="editIconTable">
                         <tr>
-                            <td><button type="button" class="btn btn-secondary" @click="calculateFilter()">Calcular Filtro</button></td>
-                            <td>
-                                <select class="form-select scenarioSelect" aria-label="Default select example" v-model="icon" >
+                            <td class="calculateFilterTd"><button type="button" class="btn btn-secondary"
+                                    @click="calculateFilter()">Calcular Filtro</button></td>
+                            <td class="iconSelectTd">
+                                <select class="form-select iconSelect" v-model="icon" >
                                   <option selected v-bind:value="null"></option>
                                   <option v-for="iconType in iconTypes" :value="iconType">{{iconType}}</option>
                                 </select>
@@ -197,7 +214,8 @@ export default {
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button @click="confirmEditIcon" type="button" class="btn btn-primary">Delete</button>
+                    <button @click="finishIconEdition()" type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        Finish</button>
                   </div>
                 </div>
               </div>

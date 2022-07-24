@@ -25,6 +25,9 @@ import { SELECT_STRONGHOLD_BY_USER_ID, SELECT_STRONGHOLD_BY_ID_AND_USER_ID, UPDA
 import { SELECT_SCENARIO_BY_USER_ID, SELECT_SCENARIO_BY_ID_AND_USER_ID, UPDATE_SCENARIO,
     CREATE_SCENARIO, DELETE_SCENARIO_BY_ID } from './server/repository/scenario/scenario_repository.mjs'
 
+import { SELECT_RECIPE_BY_USER_ID, SELECT_RECIPE_BY_ID_AND_USER_ID, UPDATE_RECIPE,
+    CREATE_RECIPE, DELETE_RECIPE_BY_ID } from './server/repository/recipe/recipe_repository.mjs'
+
 let Pool = pg.Pool;
 
 const app = express();
@@ -361,7 +364,8 @@ app.post('/resource', validateAuthenticated(async function(req, res, idToken) {
 app.put('/resource', validateAuthenticated(async function(req, res, idToken) {
     res.setHeader('Content-Type', 'application/json');
     let resource = req.body.resource;
-    sendQuery(res, UPDATE_RESOURCE, [resource.id, resource.name, resource.scenario_id, idToken.sub]);
+    sendQuery(res, UPDATE_RESOURCE, [resource.id, idToken.sub, resource.name, resource.scenario_id,
+        resource.icon, resource.hex, resource.filter]);
 }));
 
 app.delete('/resource', validateAuthenticated(async function(req, res, idToken) {
@@ -380,6 +384,46 @@ app.delete('/resource', validateAuthenticated(async function(req, res, idToken) 
         },
         (err) => {
             logError("Error while trying to find resource to delete: "+err);
+            logError(err.stack);
+            res.status(500)
+            res.send("Internal server error");
+            return;
+        });
+}));
+
+app.get('/recipe', validateAuthenticated(async function(req, res, idToken) {
+    setHeadersNeverCache(res);
+    res.setHeader('Content-Type', 'application/json');
+    sendQuery(res, SELECT_RECIPE_BY_USER_ID, [idToken.sub]);
+}));
+
+app.post('/recipe', validateAuthenticated(async function(req, res, idToken) {
+    res.setHeader('Content-Type', 'application/json');
+    sendQuery(res, CREATE_RECIPE, [uuidv4(), req.body.name, idToken.sub]);
+}));
+
+app.put('/recipe', validateAuthenticated(async function(req, res, idToken) {
+    res.setHeader('Content-Type', 'application/json');
+    let recipe = req.body.recipe;
+    sendQuery(res, UPDATE_RECIPE, [recipe.id, recipe.name, recipe.scenario_id, idToken.sub]);
+}));
+
+app.delete('/recipe', validateAuthenticated(async function(req, res, idToken) {
+    res.setHeader('Content-Type', 'application/json');
+    runQuery(SELECT_RECIPE_BY_ID_AND_USER_ID, [req.body.recipe.id, idToken.sub],
+        (result) => {
+            let recipeToDelete = result.rows[0];
+            if(isNullOrUndefined(recipeToDelete)){
+                logError("Cannot find recipe to delete: "+err);
+                logError(err.stack);
+                res.status(500)
+                res.send("Internal server error");
+                return;
+            }
+            sendQuery(res, DELETE_RECIPE_BY_ID, [recipeToDelete.id]);
+        },
+        (err) => {
+            logError("Error while trying to find recipe to delete: "+err);
             logError(err.stack);
             res.status(500)
             res.send("Internal server error");

@@ -8,10 +8,10 @@ export const RECIPE = new View('RECIPE', 'Recipes');
 export const WORKER = new View('WORKER', 'Workers');
 export const DATE = new View('DATE', 'Date');
 export const STRONGHOLD = new View('STRONGHOLD', 'Strongholds');
-export const LOGS = new View('LOGS', 'Logs');
 export const SCENARIO = new View('SCENARIO', 'Scenario');
 export const DASHBOARD = new View('DASHBOARD', 'Dashboard');
 export const ICON = new View('ICON', 'Icon');
+export const LOGS = new View('LOGS', 'Logs');
 
 export const VIEWS = [DASHBOARD, SCENARIO, STRONGHOLD, RESOURCE, RECIPE, WORKER, DATE, ICON, LOGS];
 

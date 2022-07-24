@@ -32,6 +32,7 @@ export default {
             <Stronghold v-if="selectedView == 'STRONGHOLD'"/>
             <Scenario v-if="selectedView == 'SCENARIO'"/>
             <Resource v-if="selectedView == 'RESOURCE'"/>
+            <Recipe v-if="selectedView == 'RECIPE'"/>
             <Logs v-if="selectedView == 'LOGS'"/>
         </div>
     `

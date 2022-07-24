@@ -20,6 +20,7 @@ export function createStrongStore() {
           sequence: 0,
           strongholds: [],
           scenarios: [],
+          recipes: [],
         }
       },
       getters: {
@@ -39,6 +40,9 @@ export function createStrongStore() {
         },
         setResources (state, resources) {
             state.resources = resources;
+        },
+        setRecipes (state, recipes) {
+            state.recipes = recipes;
         },
         pushLog (state, log) {
             state.logs.push(log);
@@ -294,6 +298,70 @@ export function createStrongStore() {
              .catch(function (error) {
                dispatch('handleError', error);
                resource.loading = false;
+             });
+        },
+        loadRecipes ({ dispatch, commit }) {
+            axios.get('/recipe')
+              .then(function (response) {
+                commit('setRecipes', response.data);
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        addNewRecipe({dispatch, commit}, payload) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios.post('/recipe',  {
+                  name: payload.name,
+                  _csrf: csrfToken
+              })
+              .then(function (response) {
+                dispatch('loadRecipes');
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        addNewRecipe({dispatch, commit}, payload) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios.post('/recipe',  {
+                  name: payload.name,
+                  _csrf: csrfToken
+              })
+              .then(function (response) {
+                dispatch('loadRecipes');
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        deleteRecipe({dispatch, commit}, recipe) {
+            let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+            axios.delete('/recipe',  { data: {
+                  recipe: recipe,
+                  _csrf: csrfToken
+              }})
+              .then(function (response) {
+                dispatch('loadRecipes');
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+              });
+        },
+        updateRecipe({dispatch, commit}, recipe) {
+           recipe.loading = true;
+           let csrfToken = document.getElementsByClassName('csrfToken')[0].innerText;
+           axios.put('/recipe',  {
+                 recipe: recipe,
+                 _csrf: csrfToken
+             })
+             .then(function (response) {
+               dispatch('loadRecipes');
+               recipe.loading = false;
+             })
+             .catch(function (error) {
+               dispatch('handleError', error);
+               recipe.loading = false;
              });
         },
       }

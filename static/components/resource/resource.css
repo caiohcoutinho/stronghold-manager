@@ -46,3 +46,16 @@ span.iconComponent.bigIcon, span.iconComponent.bigIcon svg {
     width: 100%;
     height: 100%;
 }
+
+td.calculateFilterTd {
+    text-align: center;
+}
+
+.iconSelectTd select, .iconSelectTd option{
+    color: black;
+}
+
+td.resourceIcon span.iconComponent svg{
+    height: 32px;
+    width: 32px;
+}

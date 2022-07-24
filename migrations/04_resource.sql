@@ -19,4 +19,13 @@ WITH (
 );
 
 ALTER TABLE public.resource
+    ADD COLUMN icon character varying(255);
+
+ALTER TABLE public.resource
+    ADD COLUMN hex character varying(255);
+
+ALTER TABLE public.resource
+    ADD COLUMN filter character varying(2048);
+
+ALTER TABLE public.resource
     OWNER to "stronghold-manager";
