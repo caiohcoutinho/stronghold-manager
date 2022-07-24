@@ -1,4 +1,5 @@
 import { TEXT_INPUT_THROTTLE } from '../constants.js'
+import NodeRoot from './nodeRoot.js'
 
 export default {
     data() {
@@ -27,6 +28,9 @@ export default {
         loadRecipes(){
             this.$store.dispatch("loadRecipes");
         },
+        loadResources(){
+            this.$store.dispatch("loadResources");
+        },
         addNewRecipe(){
             this.$store.dispatch("addNewRecipe", {name: "New Recipe"});
         },
@@ -49,10 +53,22 @@ export default {
         updateRecipeScenario(recipe) {
             this.$store.dispatch('updateRecipe', recipe);;
         },
+        editFormula(recipe){
+            if(recipe.formula == null){
+                recipe.formula = {id:'Root', count:0};
+            }
+            this.selectedRecipe = recipe;
+            this.modal = new bootstrap.Modal(document.getElementById('formulaEdition'));
+            this.modal.show();
+        },
+        updateStructure(newFormula){
+            this.selectedRecipe.formula = newFormula;
+        }
     },
     mounted: function(){
         if(this.hasUserProfile) {
             this.loadScenarios();
+            this.loadResources();
             this.loadRecipes();
         }
     },
@@ -63,6 +79,9 @@ export default {
                 this.loadRecipes();
             }
         }
+    },
+    components: {
+        NodeRoot
     },
     template:
     `
@@ -75,6 +94,7 @@ export default {
                 <tr>
                     <th>#</th>
                     <th>Name</th>
+                    <th>Formula</th>
                     <th>Scenario</th>
                     <th>Owner</th>
                 </tr>
@@ -86,6 +106,9 @@ export default {
                         <span v-if="recipe.loading" class="loadingIcon"><img class="loadingImg" src="/components/loading.gif"/></span>
                     </td>
                     <td><input type="text" v-model="recipe.name" @input="updateRecipeName(recipe)"/></td>
+                    <td class="editFormula">
+                        <button type="button" class="btn btn-link" @click="editFormula(recipe)">Editar</button>
+                    </td>
                     <td class="scenarioSelectTd">
                         <select class="form-select scenarioSelect" aria-label="Default select example"
                             v-model="recipe.scenario_id" @change="updateRecipeScenario(recipe)">
@@ -95,7 +118,7 @@ export default {
                     <td>{{recipe.owner_name}}</td>
                 </tr>
                 <tr>
-                    <td colspan="4">
+                    <td colspan="5">
                         <span @click="addNewRecipe" class="addNewButton">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/>
@@ -119,6 +142,26 @@ export default {
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button @click="confirmDeleteRecipe()" type="button" class="btn btn-primary">Delete</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="formulaEdition" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Formula</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <NodeRoot v-if="selectedRecipe != null" :structure="selectedRecipe.formula"
+                        @updateStructure="updateStructure($event)"/>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button @click="confirmDeleteRecipe()" type="button" class="btn btn-primary">Finish</button>
                   </div>
                 </div>
               </div>
