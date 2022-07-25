@@ -198,7 +198,7 @@ export default {
                     <table class="editIconTable">
                         <tr>
                             <td class="calculateFilterTd"><button type="button" class="btn btn-secondary"
-                                    @click="calculateFilter()">Calcular Filtro</button></td>
+                                    @click="calculateFilter()">Generate Filter</button></td>
                             <td class="iconSelectTd">
                                 <select class="form-select iconSelect" v-model="icon" >
                                   <option selected v-bind:value="null"></option>

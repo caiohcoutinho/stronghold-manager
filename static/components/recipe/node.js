@@ -1,6 +1,6 @@
 export default {
     name: 'Node',
-    props: ['nodeId', 'nodeType', 'children', 'quantity', 'resource', 'count', 'showExcludeButton'],
+    props: ['node_id', 'nodeType', 'children', 'quantity', 'resourceId', 'count', 'showExcludeButton'],
     emits: ['changeStructure'],
     computed: {
         resources(){
@@ -15,22 +15,22 @@ export default {
     },
     methods: {
         addChild(){
-            this.$emit('changeStructure', this.nodeId+'|addChild');
+            this.$emit('changeStructure', this.node_id+'|addChild');
         },
         removeNode(){
-            this.$emit('changeStructure', this.nodeId+'|removeChild');
+            this.$emit('changeStructure', this.node_id+'|removeChild');
         },
         changeNodeType(newValue){
-            this.$emit('changeStructure', this.nodeId+'|nodeType='+newValue);
+            this.$emit('changeStructure', this.node_id+'|nodeType='+newValue);
         },
         changeNodeQuantity(newValue){
-            this.$emit('changeStructure', this.nodeId+'|quantity='+newValue);
+            this.$emit('changeStructure', this.node_id+'|quantity='+newValue);
         },
-        changeNodeResource(newValue){
-            this.$emit('changeStructure', this.nodeId+'|resource='+newValue);
+        changeNodeResourceId(newValue){
+            this.$emit('changeStructure', this.node_id+'|resourceId='+newValue);
         },
         bubbleUp(value){
-            this.$emit('changeStructure', this.nodeId+'|'+value);
+            this.$emit('changeStructure', this.node_id+'|'+value);
         }
     },
     mounted: function(){
@@ -63,7 +63,7 @@ export default {
                     <input class="nodeQuantityNumber" :value="quantity" type="number" v-if="nodeType == 'quantity'"
                         @change="changeNodeQuantity($event.target.value)"/>
                     <select v-if="nodeType == 'resource'" class="form-select resourceSelect"
-                        :value="resource" @change="changeNodeResource($event.target.value)">
+                        :value="resourceId" @change="changeNodeResourceId($event.target.value)">
                       <option selected v-bind:value="null"></option>
                       <option v-for="resource in resources" v-bind:value="resource.id">{{resource.name}}</option>
                     </select>
@@ -77,7 +77,7 @@ export default {
                 <td class="col-md-11">
                     <div class="nodeChildren" v-if="nodeType != 'resource' && nodeType != null">
                         <div v-for="(child, index) in children">
-                            <Node @changeStructure="bubbleUp" :nodeId="child.nodeId" :nodeType="child.nodeType"
+                            <Node @changeStructure="bubbleUp" :node_id="child.node_id" :nodeType="child.nodeType"
                                     :quantity="child.quantity" :resource="child.resource"
                                     :children="child.children" showExcludeButton="true"/>
                         </div>

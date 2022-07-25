@@ -47,7 +47,7 @@ export default {
               }, TEXT_INPUT_THROTTLE);
         })(),
         updateStrongholdScenario(stronghold) {
-            this.$store.dispatch('updateStronghold', stronghold);;
+            this.$store.dispatch('updateStronghold', stronghold);
         },
     },
     mounted: function(){

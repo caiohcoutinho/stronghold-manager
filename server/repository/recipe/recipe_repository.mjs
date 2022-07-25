@@ -11,6 +11,12 @@ export const UPDATE_RECIPE = `
     WHERE id = $1 AND owner_id = $4
 `;
 
+export const UPDATE_RECIPE_FORMULA_NODE_ID = `
+    UPDATE recipe
+    SET formula_id = $3
+    WHERE id = $1 AND owner_id = $2
+`
+
 export const SELECT_RECIPE_BY_ID_AND_USER_ID = `
     SELECT *
     FROM recipe

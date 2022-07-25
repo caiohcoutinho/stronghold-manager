@@ -26,7 +26,11 @@ import { SELECT_SCENARIO_BY_USER_ID, SELECT_SCENARIO_BY_ID_AND_USER_ID, UPDATE_S
     CREATE_SCENARIO, DELETE_SCENARIO_BY_ID } from './server/repository/scenario/scenario_repository.mjs'
 
 import { SELECT_RECIPE_BY_USER_ID, SELECT_RECIPE_BY_ID_AND_USER_ID, UPDATE_RECIPE,
-    CREATE_RECIPE, DELETE_RECIPE_BY_ID } from './server/repository/recipe/recipe_repository.mjs'
+    CREATE_RECIPE, DELETE_RECIPE_BY_ID, UPDATE_RECIPE_FORMULA_NODE_ID }
+    from './server/repository/recipe/recipe_repository.mjs'
+
+import { SELECT_FORMULA_NODE_BY_ID_AND_USER_ID, CREATE_FORMULA_NODE, UPDATE_FORMULA_NODE,
+    DELETE_FORMULA_BY_ID_AND_USER_ID, SELECT_FORMULA_NODE_BY_PARENT_ID_AND_USER_ID } from './server/repository/recipe/formula_node_repository.mjs'
 
 let Pool = pg.Pool;
 
@@ -185,6 +189,8 @@ app.get('/components/profile/login.js', function(req, res) {
 });
 
 app.use(express.static(path.join(__dirname, 'static')));
+
+app.use('/favicon.ico', express.static('static/favicon.ico'));
 
 const port = process.env.PORT || 8080
 
@@ -402,11 +408,82 @@ app.post('/recipe', validateAuthenticated(async function(req, res, idToken) {
     sendQuery(res, CREATE_RECIPE, [uuidv4(), req.body.name, idToken.sub]);
 }));
 
+const upsertFormulaNode = async function(client, rootNodeId, parentNodeId, node, idToken){
+    let result = await client.query(SELECT_FORMULA_NODE_BY_ID_AND_USER_ID, [node.nodeId, idToken.sub]);
+
+    if(!_.isEmpty(result.rows)){
+        await client.query(UPDATE_FORMULA_NODE, [node.nodeId, idToken.sub, node.nodeType,
+            node.parentId, node.resourceId, node.quantity, rootNodeId]);
+    } else {
+        node.nodeId = uuidv4();
+        if(isNullOrUndefined(rootNodeId)){
+            rootNodeId = node.nodeId;
+        }
+        await client.query(CREATE_FORMULA_NODE, [node.nodeId, node.nodeType,
+            parentNodeId, node.resourceId, node.quantity, rootNodeId, idToken.sub]);
+    }
+    _.each(node.children, async (child) => {
+        await upsertFormulaNode(client, rootNodeId, node.nodeId, child, idToken);
+    });
+    return node;
+}
+
 app.put('/recipe', validateAuthenticated(async function(req, res, idToken) {
     res.setHeader('Content-Type', 'application/json');
     let recipe = req.body.recipe;
-    sendQuery(res, UPDATE_RECIPE, [recipe.id, recipe.name, recipe.scenario_id, idToken.sub]);
+    runQuery(UPDATE_RECIPE, [recipe.id, recipe.name, recipe.scenario_id, idToken.sub],
+          (result) => {
+            let formula = recipe.formula;
+            if(isNullOrUndefined(formula)){
+                res.send("OK");
+                return;
+            }
+            ;(async () => {
+              const client = await pool.connect()
+              try {
+                await client.query('BEGIN');
+                let rootNode = await upsertFormulaNode(client, formula.nodeId, null, formula, idToken);
+                await client.query(UPDATE_RECIPE_FORMULA_NODE_ID, [recipe.id, idToken.sub, rootNode.nodeId]);
+                await client.query('COMMIT')
+                client.release();
+                res.send("OK");
+                return;
+              } catch (e) {
+                await client.query('ROLLBACK')
+                logError(e);
+                logError(e.stack);
+                res.status(500);
+                res.send("Internal server error");
+                client.release();
+                return;
+              }
+            })().catch(e => console.error(e.stack))
+          },
+          (err) => {
+              logError("Error while trying to find update recipe: "+err);
+              logError(err.stack);
+              res.status(500)
+              res.send("Internal server error");
+              return;
+          });
 }));
+
+const deleteFormulaNode = async function(client, node_id, idToken){
+    let result = await client.query(SELECT_FORMULA_NODE_BY_ID_AND_USER_ID, [node_id, idToken.sub]);
+    if(_.isEmpty(result.rows)){
+        return;
+    }
+    let node = result.rows[0];
+    let childrenResult = await client.query(SELECT_FORMULA_NODE_BY_PARENT_ID_AND_USER_ID, [node.node_id, idToken.sub]);
+    let children = childrenResult.rows;
+    if(!_.isEmpty(children)){
+        _.each(children, async (child) => {
+            await deleteFormulaNode(client, child.node_id, idToken);
+        });
+    }
+    await client.query(DELETE_FORMULA_BY_ID_AND_USER_ID, [node.node_id, idToken.sub]);
+    return node;
+}
 
 app.delete('/recipe', validateAuthenticated(async function(req, res, idToken) {
     res.setHeader('Content-Type', 'application/json');
@@ -420,7 +497,38 @@ app.delete('/recipe', validateAuthenticated(async function(req, res, idToken) {
                 res.send("Internal server error");
                 return;
             }
-            sendQuery(res, DELETE_RECIPE_BY_ID, [recipeToDelete.id]);
+            logDebug('recipeToDelete = '+JSON.stringify(recipeToDelete));
+            let formula_id = recipeToDelete.formula_id;
+            runQuery(DELETE_RECIPE_BY_ID, [recipeToDelete.id],
+                (result2)=>{
+                    logDebug("result2 = "+JSON.stringify(result2));
+                    ;(async () => {
+                      const client = await pool.connect()
+                      try {
+                        await client.query('BEGIN');
+                        let rootNode = await deleteFormulaNode(client, formula_id, idToken);
+                        await client.query('COMMIT')
+                        client.release();
+                        res.send("OK");
+                        return;
+                      } catch (e) {
+                        await client.query('ROLLBACK')
+                        logError(e);
+                        logError(e.stack);
+                        res.status(500);
+                        res.send("Internal server error");
+                        client.release();
+                        return;
+                      }
+                    })().catch(e => console.error(e.stack))
+                },
+                (err)=>{
+                    logError("Error while trying to delete recipe: "+err);
+                    logError(err.stack);
+                    res.status(500)
+                    res.send("Internal server error");
+                    return;
+                });
         },
         (err) => {
             logError("Error while trying to find recipe to delete: "+err);
@@ -429,4 +537,45 @@ app.delete('/recipe', validateAuthenticated(async function(req, res, idToken) {
             res.send("Internal server error");
             return;
         });
+}));
+
+const getFormulaNode = async function(client, node_id, idToken){
+    let result = await client.query(SELECT_FORMULA_NODE_BY_ID_AND_USER_ID, [node_id, idToken.sub]);
+    if(_.isEmpty(result.rows)){
+        return;
+    }
+    let node = result.rows[0];
+    let childrenResult = await client.query(SELECT_FORMULA_NODE_BY_PARENT_ID_AND_USER_ID, [node.node_id, idToken.sub]);
+    let children = childrenResult.rows;
+    if(!_.isEmpty(children)){
+        node.children = _.map(children, async (child) => {
+            return await getFormulaNode(client, child.node_id, idToken);
+        });
+    }
+    return node;
+}
+
+app.get('/formula', validateAuthenticated(async function(req, res, idToken) {
+    setHeadersNeverCache(res);
+    res.setHeader('Content-Type', 'application/json');
+    let formula_id = req.body.formula_id;
+    ;(async () => {
+      const client = await pool.connect()
+      try {
+        await client.query('BEGIN');
+        let rootNode = await getFormulaNode(client, formula_id, idToken);
+        await client.query('COMMIT')
+        client.release();
+        res.send("OK");
+        return;
+      } catch (e) {
+        await client.query('ROLLBACK')
+        logError(e);
+        logError(e.stack);
+        res.status(500);
+        res.send("Internal server error");
+        client.release();
+        return;
+      }
+    })().catch(e => console.error(e.stack))
 }));

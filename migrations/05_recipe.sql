@@ -17,6 +17,3 @@ CREATE TABLE public.recipe
 WITH (
     OIDS = FALSE
 );
-
-ALTER TABLE public.recipe
-    OWNER to "stronghold-manager";

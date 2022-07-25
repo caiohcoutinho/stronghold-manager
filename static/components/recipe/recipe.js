@@ -6,6 +6,7 @@ export default {
         return {
             modal: null,
             selectedRecipe: null,
+            formula: null
         }
     },
     computed: {
@@ -51,18 +52,36 @@ export default {
               }, TEXT_INPUT_THROTTLE);
         })(),
         updateRecipeScenario(recipe) {
-            this.$store.dispatch('updateRecipe', recipe);;
+            this.$store.dispatch('updateRecipe', recipe);
         },
         editFormula(recipe){
             if(recipe.formula == null){
                 recipe.formula = {id:'Root', count:0};
+            } else {
+                
             }
             this.selectedRecipe = recipe;
+            this.formula = this.selectedRecipe.formula;
+            this.previousFormula = JSON.stringify(recipe.formula);
             this.modal = new bootstrap.Modal(document.getElementById('formulaEdition'));
             this.modal.show();
         },
         updateStructure(newFormula){
-            this.selectedRecipe.formula = newFormula;
+            this.formula = newFormula;
+        },
+        confirmEditFormula(){
+            if(this.previousFormula != JSON.stringify(this.formula)){
+                console.log("Updating recipe because formula changed");
+                this.selectedRecipe.formula = this.formula;
+                this.$store.dispatch('updateRecipe', this.selectedRecipe);
+            } else {
+                console.log("Formula didn't change. Skipping update.");
+            }
+            this.modal.hide();
+            this.previousFormula = null;
+            this.formula = null;
+            this.modal = null;
+            this.selectedRecipe = null;
         }
     },
     mounted: function(){
@@ -156,12 +175,12 @@ export default {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                   </div>
                   <div class="modal-body">
-                    <NodeRoot v-if="selectedRecipe != null" :structure="selectedRecipe.formula"
+                    <NodeRoot v-if="formula != null" :structure="formula"
                         @updateStructure="updateStructure($event)"/>
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button @click="confirmDeleteRecipe()" type="button" class="btn btn-primary">Finish</button>
+                    <button @click="confirmEditFormula()" type="button" class="btn btn-primary">Confirm</button>
                   </div>
                 </div>
               </div>
