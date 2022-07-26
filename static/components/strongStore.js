@@ -364,6 +364,16 @@ export function createStrongStore() {
                recipe.loading = false;
              });
         },
+        loadFormula: async function ({ dispatch, commit }, formula_id) {
+            return await axios.get('/formula/'+formula_id)
+              .then(function (response) {
+                return response.data;
+              })
+              .catch(function (error) {
+                dispatch('handleError', error);
+                throw error;
+              });
+        },
       }
     });
    return store;

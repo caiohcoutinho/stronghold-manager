@@ -54,15 +54,15 @@ export default {
         updateRecipeScenario(recipe) {
             this.$store.dispatch('updateRecipe', recipe);
         },
-        editFormula(recipe){
-            if(recipe.formula == null){
-                recipe.formula = {id:'Root', count:0};
-            } else {
-                
-            }
+        editFormula: async function(recipe){
             this.selectedRecipe = recipe;
-            this.formula = this.selectedRecipe.formula;
-            this.previousFormula = JSON.stringify(recipe.formula);
+            let formula_id = recipe.formula_id;
+            if(formula_id == null){
+                this.formula = {id:'Root', count:0};
+            } else {
+                this.formula = await this.$store.dispatch('loadFormula', formula_id);
+            }
+            this.previousFormula = JSON.stringify(this.formula);
             this.modal = new bootstrap.Modal(document.getElementById('formulaEdition'));
             this.modal.show();
         },
