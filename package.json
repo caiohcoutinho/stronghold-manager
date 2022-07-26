@@ -1,36 +1,44 @@
 {
-  "name": "stronghold-manager",
-  "version": "1.0.0",
-  "description": "stronghold-manager",
-  "main": "index.js",
-  "scripts": {
-    "start": "node server.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/caiohcoutinho/stronghold-manager.git"
-  },
-  "author": "caiohcoutinho@gmail.com",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/caiohcoutinho/stronghold-manager/issues"
-  },
-  "homepage": "https://github.com/caiohcoutinho/stronghold-manager#readme",
-  "dependencies": {
-    "@ckpack/vue-color": "^1.2.0",
-    "axios": "^0.27.2",
-    "body-parser": "^1.20.0",
-    "cookie-parser": "^1.4.6",
-    "csurf": "^1.11.0",
-    "express": "^4.18.1",
-    "express-session": "^1.17.3",
-    "jsonwebtoken": "^8.5.1",
-    "multer": "^1.4.5-lts.1",
-    "path": "^0.12.7",
-    "pg": "^8.7.3",
-    "underscore": "^1.13.4",
-    "uuid": "^8.3.2",
-    "vue": "^3.2.37"
-  }
+    "name": "stronghold-manager",
+    "version": "1.0.0",
+    "description": "stronghold-manager",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node server.mjs",
+        "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/caiohcoutinho/stronghold-manager.git"
+    },
+    "author": "caiohcoutinho@gmail.com",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/caiohcoutinho/stronghold-manager/issues"
+    },
+    "homepage": "https://github.com/caiohcoutinho/stronghold-manager#readme",
+    "dependencies": {
+        "@ckpack/vue-color": "^1.2.0",
+        "axios": "^0.27.2",
+        "body-parser": "^1.20.0",
+        "cookie-parser": "^1.4.6",
+        "csurf": "^1.11.0",
+        "express": "^4.18.1",
+        "express-session": "^1.17.3",
+        "jsonwebtoken": "^8.5.1",
+        "multer": "^1.4.5-lts.1",
+        "path": "^0.12.7",
+        "pg": "^8.7.3",
+        "underscore": "^1.13.4",
+        "uuid": "^8.3.2",
+        "vue": "^3.2.37"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.18.9",
+        "@babel/preset-env": "^7.18.9",
+        "babel-jest": "^28.1.3",
+        "jest": "^28.1.3",
+        "pg-mem": "^2.6.3"
+    }
 }

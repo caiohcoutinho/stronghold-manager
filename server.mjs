@@ -11,23 +11,45 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(
+    import.meta.url);
 const __dirname = dirname(__filename);
 
 import { SELECT_USER_BY_USER_ID, CREATE_USER } from './server/repository/profile/user_repository.mjs'
 
-import { SELECT_RESOURCE_BY_USER_ID, SELECT_RESOURCE_BY_ID_AND_USER_ID, UPDATE_RESOURCE,
-    CREATE_RESOURCE, DELETE_RESOURCE_BY_ID } from './server/repository/resource/resource_repository.mjs'
+import {
+    SELECT_RESOURCE_BY_USER_ID,
+    SELECT_RESOURCE_BY_ID_AND_USER_ID,
+    UPDATE_RESOURCE,
+    CREATE_RESOURCE,
+    DELETE_RESOURCE_BY_ID
+} from './server/repository/resource/resource_repository.mjs'
 
-import { SELECT_STRONGHOLD_BY_USER_ID, SELECT_STRONGHOLD_BY_ID_AND_USER_ID, UPDATE_STRONGHOLD,
-    CREATE_STRONGHOLD, DELETE_STRONGHOLD_BY_ID } from './server/repository/stronghold/stronghold_repository.mjs'
+import {
+    SELECT_STRONGHOLD_BY_USER_ID,
+    SELECT_STRONGHOLD_BY_ID_AND_USER_ID,
+    UPDATE_STRONGHOLD,
+    CREATE_STRONGHOLD,
+    DELETE_STRONGHOLD_BY_ID
+} from './server/repository/stronghold/stronghold_repository.mjs'
 
-import { SELECT_SCENARIO_BY_USER_ID, SELECT_SCENARIO_BY_ID_AND_USER_ID, UPDATE_SCENARIO,
-    CREATE_SCENARIO, DELETE_SCENARIO_BY_ID } from './server/repository/scenario/scenario_repository.mjs'
+import {
+    SELECT_SCENARIO_BY_USER_ID,
+    SELECT_SCENARIO_BY_ID_AND_USER_ID,
+    UPDATE_SCENARIO,
+    CREATE_SCENARIO,
+    DELETE_SCENARIO_BY_ID
+} from './server/repository/scenario/scenario_repository.mjs'
 
-import { SELECT_RECIPE_BY_USER_ID, SELECT_RECIPE_BY_ID_AND_USER_ID, UPDATE_RECIPE,
-    CREATE_RECIPE, DELETE_RECIPE_BY_ID, UPDATE_RECIPE_FORMULA_NODE_ID }
-    from './server/repository/recipe/recipe_repository.mjs'
+import {
+    SELECT_RECIPE_BY_USER_ID,
+    SELECT_RECIPE_BY_ID_AND_USER_ID,
+    UPDATE_RECIPE,
+    CREATE_RECIPE,
+    DELETE_RECIPE_BY_ID,
+    UPDATE_RECIPE_FORMULA_NODE_ID
+}
+from './server/repository/recipe/recipe_repository.mjs'
 
 import upsertFormula from './server/repository/recipe/formula_node_repository.mjs';
 
@@ -37,19 +59,19 @@ let Pool = pg.Pool;
 
 const app = express();
 
-const log = function(label, object){
-    console.log("["+label+"] "+JSON.stringify(object));
+const log = function(label, object) {
+    console.log("[" + label + "] " + JSON.stringify(object));
 }
 
-const logDebug = function(object){
+const logDebug = function(object) {
     log("DEBUG", object);
 }
 
-const logError = function(object){
+const logError = function(object) {
     log("ERROR", object);
 }
 
-const logInfo = function(object){
+const logInfo = function(object) {
     log("INFO", object);
 }
 
@@ -66,28 +88,28 @@ const areKeysExpired = function() {
     return diff >= googlePublicKeysMaxAge;
 }
 
-const refreshGoogleKeys = async function(){
+const refreshGoogleKeys = async function() {
     return axios
         .get('https://www.googleapis.com/oauth2/v1/certs')
-        .then(function (response) {
+        .then(function(response) {
             googlePublicKeysRetrieveDate = new Date();
             googlePublicKeysMaxAge = parseInt(response.headers['cache-control'].match(/max-age=(\d+)/)[1], 10);
             googlePublicKeys = response.data;
-          })
-          .catch(function (error) {
+        })
+        .catch(function(error) {
             googlePublicKeysRetrieveDate = null;
             googlePublicKeysMaxAge = null;
             googlePublicKeys = [];
-            logError('Error while trying to refresh google public keys: '+error);
+            logError('Error while trying to refresh google public keys: ' + error);
             logError(error.stack);
-          });
+        });
 }
 
-const htmlRenderer = function(path, view_options, callback){
+const htmlRenderer = function(path, view_options, callback) {
     let props = view_options.properties;
     let str = fs.readFileSync(path).toString();
-    _.each(_.pairs(props),  (pair) => {
-        str = str.replace(new RegExp('#{'+pair[0]+'}', 'g'), pair[1]);
+    _.each(_.pairs(props), (pair) => {
+        str = str.replace(new RegExp('#{' + pair[0] + '}', 'g'), pair[1]);
     });
     callback(null, str);
 }
@@ -108,22 +130,23 @@ app.use(session({
 }));
 
 app.use(
-  express.urlencoded({
-    extended: true,
-  })
+    express.urlencoded({
+        extended: true,
+    })
 );
 
 app.use(express.json());
 
 app.use(csrf());
 
-const pool = new Pool({max: 200});
+const pool = new Pool({ max: 200 });
 
-const verifyIdTokenWithKey = function(idToken, pub){
+const verifyIdTokenWithKey = function(idToken, pub) {
     return jwt.verify(idToken, pub, {
-           audience: "240439775239-khrfib64ndsij9nndeoprqrg1gkogn4r.apps.googleusercontent.com",
-           issuer: ["accounts.google.com", "https://accounts.google.com"],
-           algorithms: 'RS256'});
+        audience: "240439775239-khrfib64ndsij9nndeoprqrg1gkogn4r.apps.googleusercontent.com",
+        issuer: ["accounts.google.com", "https://accounts.google.com"],
+        algorithms: 'RS256'
+    });
 }
 
 const isNullOrUndefined = function(obj) {
@@ -131,15 +154,15 @@ const isNullOrUndefined = function(obj) {
 }
 
 const validateIdToken = async function(idToken) {
-    if (process.env.LOCAL){
+    if (process.env.LOCAL) {
         return {
-           sub: "1234abcd-1234-abcd-1234-abcd1234abcd",
-           email: 'test_user@gmail.com',
-           name: 'Goofy Goofest',
-           picture: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDEzLQIYir3TKubuEpEgSS3mMWvKbUtPbPzzcKV0V3ai2Jq4FLsL6Kno0aD3H1R34xzsM&usqp=CAU'
+            sub: "1234abcd-1234-abcd-1234-abcd1234abcd",
+            email: 'test_user@gmail.com',
+            name: 'Goofy Goofest',
+            picture: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDEzLQIYir3TKubuEpEgSS3mMWvKbUtPbPzzcKV0V3ai2Jq4FLsL6Kno0aD3H1R34xzsM&usqp=CAU'
         }
     }
-    if(areKeysExpired){
+    if (areKeysExpired) {
         await refreshGoogleKeys();
     }
     let i = 0;
@@ -147,16 +170,16 @@ const validateIdToken = async function(idToken) {
         try {
             return verifyIdTokenWithKey(idToken, key);
             return true;
-        } catch(error) {
+        } catch (error) {
             return null;
         }
     }), _.negate(_.isNull));
 }
 
 const validateAuthenticated = function(callback) {
-    return function(req, res){
+    return function(req, res) {
         let idToken = req.session.parsedToken;
-        if(!process.env.LOCAL && isNullOrUndefined(idToken)){
+        if (!process.env.LOCAL && isNullOrUndefined(idToken)) {
             res.status(401);
             res.send("Unauthorized");
         } else {
@@ -165,25 +188,24 @@ const validateAuthenticated = function(callback) {
     }
 }
 
-const setHeadersNeverCache = function(res){
+const setHeadersNeverCache = function(res) {
     res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.header('Pragma', 'no-cache');
     res.header('Expires', '0');
 }
 
 app.get('/', function(req, res) {
-  if (req.session.csrfToken == undefined){
-    req.session.csrfToken = req.csrfToken();
-  }
-  res.header('Content-type', 'text/html');
-  res.header('Access-Control-Allow-Origin', '*')
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  res.render(path.join(__dirname, 'static/index.html'),
-        {properties: {csrfToken: req.session.csrfToken}});
+    if (req.session.csrfToken == undefined) {
+        req.session.csrfToken = req.csrfToken();
+    }
+    res.header('Content-type', 'text/html');
+    res.header('Access-Control-Allow-Origin', '*')
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.render(path.join(__dirname, 'static/index.html'), { properties: { csrfToken: req.session.csrfToken } });
 });
 
 app.get('/components/profile/login.js', function(req, res) {
-  res.sendFile(path.join(__dirname, 'static/components/profile/login'+ (process.env.LOCAL ? '-local' : '') +'.js'));
+    res.sendFile(path.join(__dirname, 'static/components/profile/login' + (process.env.LOCAL ? '-local' : '') + '.js'));
 });
 
 app.use(express.static(path.join(__dirname, 'static')));
@@ -192,10 +214,10 @@ app.use('/favicon.ico', express.static('static/favicon.ico'));
 
 const port = process.env.PORT || 8080
 
-var server = app.listen(port, function () {
-   var host = server.address().address
+var server = app.listen(port, function() {
+    var host = server.address().address
 
-   console.log("Stronghold-Manager running at http://%s:%s", host, port)
+    console.log("Stronghold-Manager running at http://%s:%s", host, port)
 })
 
 const sendQuery = function(response, query, values) {
@@ -211,13 +233,13 @@ const sendQuery = function(response, query, values) {
 
 const runQuery = function(query, values, callback, errorCallback) {
     return pool
-      .query(query, values)
-      .then(res => {
-        callback(res);
-      })
-      .catch(err => {
-        errorCallback(err);
-      })
+        .query(query, values)
+        .then(res => {
+            callback(res);
+        })
+        .catch(err => {
+            errorCallback(err);
+        })
 }
 
 app.post('/authenticate', async function(req, res) {
@@ -226,35 +248,34 @@ app.post('/authenticate', async function(req, res) {
     let body = req.body;
     let idToken = body.idToken;
     let parsedToken = await validateIdToken(idToken);
-    if(isNullOrUndefined(parsedToken)) {
+    if (isNullOrUndefined(parsedToken)) {
         res.status(401)
         res.send("Unauthorized");
         return;
     }
     runQuery(SELECT_USER_BY_USER_ID, [parsedToken.sub], (result) => {
-       if(_.isEmpty(result.rows)){
+        if (_.isEmpty(result.rows)) {
             logDebug("User don't exist. Creating.");
-            runQuery(CREATE_USER,
-                [parsedToken.sub, parsedToken.name, parsedToken.email, parsedToken.picture],
+            runQuery(CREATE_USER, [parsedToken.sub, parsedToken.name, parsedToken.email, parsedToken.picture],
                 (result2) => {
-                   req.session.parsedToken = parsedToken;
-                   res.send("OK");
-                   return;
+                    req.session.parsedToken = parsedToken;
+                    res.send("OK");
+                    return;
                 },
                 (err) => {
-                    logError("Error while creating user: "+err);
+                    logError("Error while creating user: " + err);
                     logError(err.stack);
                     res.status(500)
                     res.send("Internal server error");
                     return;
                 });
-       } else {
-           req.session.parsedToken = parsedToken;
-           res.send("OK");
-           return;
-       }
+        } else {
+            req.session.parsedToken = parsedToken;
+            res.send("OK");
+            return;
+        }
     }, (err) => {
-        logError("Error while trying get check existing user: "+err);
+        logError("Error while trying get check existing user: " + err);
         logError(err.stack);
         res.status(500)
         res.send("Internal server error");
@@ -262,14 +283,14 @@ app.post('/authenticate', async function(req, res) {
     });
 });
 
-app.post('/logout', async function(req, res){
+app.post('/logout', async function(req, res) {
     req.session.destroy(function(err) {
-      if(err){
-        res.status(500)
-        res.send("Error while logging out: "+err);
-      } else {
-        res.send("OK");
-      }
+        if (err) {
+            res.status(500)
+            res.send("Error while logging out: " + err);
+        } else {
+            res.send("OK");
+        }
     })
 });
 
@@ -296,8 +317,8 @@ app.delete('/stronghold', validateAuthenticated(async function(req, res, idToken
     runQuery(SELECT_STRONGHOLD_BY_ID_AND_USER_ID, [req.body.stronghold.id, idToken.sub],
         (result) => {
             let strongholdToDelete = result.rows[0];
-            if(isNullOrUndefined(strongholdToDelete)){
-                logError("Cannot find stronghold to delete: "+err);
+            if (isNullOrUndefined(strongholdToDelete)) {
+                logError("Cannot find stronghold to delete: " + err);
                 logError(err.stack);
                 res.status(500)
                 res.send("Internal server error");
@@ -306,7 +327,7 @@ app.delete('/stronghold', validateAuthenticated(async function(req, res, idToken
             sendQuery(res, DELETE_STRONGHOLD_BY_ID, [strongholdToDelete.id]);
         },
         (err) => {
-            logError("Error while trying to find stronghold to delete: "+err);
+            logError("Error while trying to find stronghold to delete: " + err);
             logError(err.stack);
             res.status(500)
             res.send("Internal server error");
@@ -336,8 +357,8 @@ app.delete('/scenario', validateAuthenticated(async function(req, res, idToken) 
     runQuery(SELECT_SCENARIO_BY_ID_AND_USER_ID, [req.body.scenario.id, idToken.sub],
         (result) => {
             let scenarioToDelete = result.rows[0];
-            if(isNullOrUndefined(scenarioToDelete)){
-                logError("Cannot find scenario to delete: "+err);
+            if (isNullOrUndefined(scenarioToDelete)) {
+                logError("Cannot find scenario to delete: " + err);
                 logError(err.stack);
                 res.status(500)
                 res.send("Internal server error");
@@ -346,7 +367,7 @@ app.delete('/scenario', validateAuthenticated(async function(req, res, idToken) 
             sendQuery(res, DELETE_SCENARIO_BY_ID, [scenarioToDelete.id]);
         },
         (err) => {
-            logError("Error while trying to find scenario to delete: "+err);
+            logError("Error while trying to find scenario to delete: " + err);
             logError(err.stack);
             res.status(500)
             res.send("Internal server error");
@@ -369,7 +390,8 @@ app.put('/resource', validateAuthenticated(async function(req, res, idToken) {
     res.setHeader('Content-Type', 'application/json');
     let resource = req.body.resource;
     sendQuery(res, UPDATE_RESOURCE, [resource.id, idToken.sub, resource.name, resource.scenario_id,
-        resource.icon, resource.hex, resource.filter]);
+        resource.icon, resource.hex, resource.filter
+    ]);
 }));
 
 app.delete('/resource', validateAuthenticated(async function(req, res, idToken) {
@@ -377,8 +399,8 @@ app.delete('/resource', validateAuthenticated(async function(req, res, idToken) 
     runQuery(SELECT_RESOURCE_BY_ID_AND_USER_ID, [req.body.resource.id, idToken.sub],
         (result) => {
             let resourceToDelete = result.rows[0];
-            if(isNullOrUndefined(resourceToDelete)){
-                logError("Cannot find resource to delete: "+err);
+            if (isNullOrUndefined(resourceToDelete)) {
+                logError("Cannot find resource to delete: " + err);
                 logError(err.stack);
                 res.status(500)
                 res.send("Internal server error");
@@ -387,7 +409,7 @@ app.delete('/resource', validateAuthenticated(async function(req, res, idToken) 
             sendQuery(res, DELETE_RESOURCE_BY_ID, [resourceToDelete.id]);
         },
         (err) => {
-            logError("Error while trying to find resource to delete: "+err);
+            logError("Error while trying to find resource to delete: " + err);
             logError(err.stack);
             res.status(500)
             res.send("Internal server error");
@@ -410,38 +432,38 @@ app.put('/recipe', validateAuthenticated(async function(req, res, idToken) {
     res.setHeader('Content-Type', 'application/json');
     let recipe = req.body.recipe;
     runQuery(UPDATE_RECIPE, [recipe.id, recipe.name, recipe.scenario_id, idToken.sub],
-          (result) => {
-            try{
+        (result) => {
+            try {
                 upsertFormula(pool, recipe);
                 res.send("OK");
                 return;
-            }  catch (e) {
+            } catch (e) {
                 logError(e);
                 logError(e.stack);
                 res.status(500);
                 res.send("Internal server error");
                 return;
             }
-          },
-          (err) => {
-              logError("Error while trying to find update recipe: "+err);
-              logError(err.stack);
-              res.status(500)
-              res.send("Internal server error");
-              return;
-          });
+        },
+        (err) => {
+            logError("Error while trying to find update recipe: " + err);
+            logError(err.stack);
+            res.status(500)
+            res.send("Internal server error");
+            return;
+        });
 }));
 
-const deleteFormulaNode = async function(client, node_id, idToken){
+const deleteFormulaNode = async function(client, node_id, idToken) {
     let result = await client.query(SELECT_FORMULA_NODE_BY_ID_AND_USER_ID, [node_id, idToken.sub]);
-    if(_.isEmpty(result.rows)){
+    if (_.isEmpty(result.rows)) {
         return;
     }
     let node = result.rows[0];
     let childrenResult = await client.query(SELECT_FORMULA_NODE_BY_PARENT_ID_AND_USER_ID, [node.node_id, idToken.sub]);
     let children = childrenResult.rows;
-    if(!_.isEmpty(children)){
-        _.each(children, async (child) => {
+    if (!_.isEmpty(children)) {
+        _.each(children, async(child) => {
             await deleteFormulaNode(client, child.node_id, idToken);
         });
     }
@@ -454,8 +476,8 @@ app.delete('/recipe', validateAuthenticated(async function(req, res, idToken) {
     runQuery(SELECT_RECIPE_BY_ID_AND_USER_ID, [req.body.recipe.id, idToken.sub],
         (result) => {
             let recipeToDelete = result.rows[0];
-            if(isNullOrUndefined(recipeToDelete)){
-                logError("Cannot find recipe to delete: "+err);
+            if (isNullOrUndefined(recipeToDelete)) {
+                logError("Cannot find recipe to delete: " + err);
                 logError(err.stack);
                 res.status(500)
                 res.send("Internal server error");
@@ -463,29 +485,29 @@ app.delete('/recipe', validateAuthenticated(async function(req, res, idToken) {
             }
             let formula_id = recipeToDelete.formula_id;
             runQuery(DELETE_RECIPE_BY_ID, [recipeToDelete.id],
-                (result2)=>{
-                    ;(async () => {
-                      const client = await pool.connect()
-                      try {
-                        await client.query('BEGIN');
-                        let rootNode = await deleteFormulaNode(client, formula_id, idToken);
-                        await client.query('COMMIT')
-                        client.release();
-                        res.send("OK");
-                        return;
-                      } catch (e) {
-                        await client.query('ROLLBACK')
-                        logError(e);
-                        logError(e.stack);
-                        res.status(500);
-                        res.send("Internal server error");
-                        client.release();
-                        return;
-                      }
+                (result2) => {;
+                    (async() => {
+                        const client = await pool.connect()
+                        try {
+                            await client.query('BEGIN');
+                            let rootNode = await deleteFormulaNode(client, formula_id, idToken);
+                            await client.query('COMMIT')
+                            client.release();
+                            res.send("OK");
+                            return;
+                        } catch (e) {
+                            await client.query('ROLLBACK')
+                            logError(e);
+                            logError(e.stack);
+                            res.status(500);
+                            res.send("Internal server error");
+                            client.release();
+                            return;
+                        }
                     })().catch(e => console.error(e.stack))
                 },
-                (err)=>{
-                    logError("Error while trying to delete recipe: "+err);
+                (err) => {
+                    logError("Error while trying to delete recipe: " + err);
                     logError(err.stack);
                     res.status(500)
                     res.send("Internal server error");
@@ -493,7 +515,7 @@ app.delete('/recipe', validateAuthenticated(async function(req, res, idToken) {
                 });
         },
         (err) => {
-            logError("Error while trying to find recipe to delete: "+err);
+            logError("Error while trying to find recipe to delete: " + err);
             logError(err.stack);
             res.status(500)
             res.send("Internal server error");
@@ -501,15 +523,15 @@ app.delete('/recipe', validateAuthenticated(async function(req, res, idToken) {
         });
 }));
 
-const getFormulaNode = async function(client, node_id, idToken){
+const getFormulaNode = async function(client, node_id, idToken) {
     let result = await client.query(SELECT_FORMULA_NODE_BY_ID_AND_USER_ID, [node_id, idToken.sub]);
-    if(_.isEmpty(result.rows)){
+    if (_.isEmpty(result.rows)) {
         return;
     }
     let node = result.rows[0];
     let childrenResult = await client.query(SELECT_FORMULA_NODE_BY_PARENT_ID_AND_USER_ID, [node.node_id, idToken.sub]);
     let children = childrenResult.rows;
-    if(!_.isEmpty(children)){
+    if (!_.isEmpty(children)) {
         node.children = await Promise.all(_.map(children, (child) => {
             let childResult = getFormulaNode(client, child.node_id, idToken);
             return childResult;
@@ -521,24 +543,24 @@ const getFormulaNode = async function(client, node_id, idToken){
 app.get('/formula/:formula_id', validateAuthenticated(async function(req, res, idToken) {
     setHeadersNeverCache(res);
     res.setHeader('Content-Type', 'application/json');
-    let formula_id = req.params.formula_id;
-    ;(async () => {
-      const client = await pool.connect()
-      try {
-        await client.query('BEGIN');
-        let rootNode = await getFormulaNode(client, formula_id, idToken);
-        await client.query('COMMIT')
-        client.release();
-        res.send(rootNode);
-        return;
-      } catch (e) {
-        await client.query('ROLLBACK')
-        logError(e);
-        logError(e.stack);
-        res.status(500);
-        res.send("Internal server error");
-        client.release();
-        return;
-      }
+    let formula_id = req.params.formula_id;;
+    (async() => {
+        const client = await pool.connect()
+        try {
+            await client.query('BEGIN');
+            let rootNode = await getFormulaNode(client, formula_id, idToken);
+            await client.query('COMMIT')
+            client.release();
+            res.send(rootNode);
+            return;
+        } catch (e) {
+            await client.query('ROLLBACK')
+            logError(e);
+            logError(e.stack);
+            res.status(500);
+            res.send("Internal server error");
+            client.release();
+            return;
+        }
     })().catch(e => console.error(e.stack))
 }));
