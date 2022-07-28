@@ -10,9 +10,6 @@ CREATE TABLE public.formula_node
         REFERENCES public.resource (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
-)
-WITH (
-    OIDS = FALSE
 );
 
 ALTER TABLE public.formula_node

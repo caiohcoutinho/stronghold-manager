@@ -1,6 +1,7 @@
 export default {
-    transforms: {},
+    transform: {},
     verbose: true,
     moduleFileExtensions: ['js', 'mjs'],
-    transformIgnorePatterns: []
+    transformIgnorePatterns: [],
+    bail: false
 };

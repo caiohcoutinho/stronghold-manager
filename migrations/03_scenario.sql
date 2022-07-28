@@ -8,9 +8,6 @@ CREATE TABLE public.scenario
         REFERENCES public.stronghold_user (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
-)
-WITH (
-    OIDS = FALSE
 );
 
 ALTER TABLE public.scenario

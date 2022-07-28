@@ -13,7 +13,4 @@ CREATE TABLE public.recipe
         REFERENCES public.scenario (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
-)
-WITH (
-    OIDS = FALSE
 );

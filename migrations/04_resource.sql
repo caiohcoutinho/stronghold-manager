@@ -13,9 +13,6 @@ CREATE TABLE public.resource
         REFERENCES public.scenario (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
-)
-WITH (
-    OIDS = FALSE
 );
 
 ALTER TABLE public.resource

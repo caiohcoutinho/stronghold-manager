@@ -1,26 +1,34 @@
-export const SELECT_STRONGHOLD_BY_USER_ID = `
-    SELECT s.*, u.name as owner_name
-    FROM stronghold s LEFT join stronghold_user u on u.id = s.owner_id
-    WHERE s.owner_id = $1
-    ORDER BY s.id
-`;
+import { Authentication } from "../authentication/Authentication.mjs";
+import { HtmlUtilities } from "../commons/HtmlUtilities.mjs";
+import { StrongholdQueries } from "./stronghold_queries.mjs";
+import { IdGenerator } from '../commons/IdGenerator.mjs';
+import _ from "../commons/UnderscoreMixin.mjs";
 
-export const UPDATE_STRONGHOLD = `
-    UPDATE stronghold
-    SET name = $2, scenario_id = $3
-    WHERE id = $1 AND owner_id = $4
-`;
+const getStronghold = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    HtmlUtilities.sendQuery(res, StrongholdQueries.SELECT_STRONGHOLD_BY_USER_ID, [idToken.sub]);
+});
 
-export const SELECT_STRONGHOLD_BY_ID_AND_USER_ID = `
-    SELECT *
-    FROM stronghold
-    WHERE id = $1 AND owner_id = $2
-    ORDER BY id
-`;
+const putStronghold = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    let stronghold = req.body.stronghold;
+    HtmlUtilities.sendQuery(res, StrongholdQueries.UPDATE_STRONGHOLD, [stronghold.id, stronghold.name, stronghold.scenario_id, idToken.sub]);
+});
 
-export const CREATE_STRONGHOLD = "INSERT INTO public.stronghold(id, name, owner_id) VALUES ($1, $2, $3);";
+const postStronghold = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    HtmlUtilities.sendQuery(res, StrongholdQueries.CREATE_STRONGHOLD, [IdGenerator.uuidv4(), req.body.name, idToken.sub]);
+})
 
-export const DELETE_STRONGHOLD_BY_ID = `
-    DELETE FROM stronghold
-    WHERE id = $1
-`;
+const deleteStronghold = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    let stronghold_id = req.body.stronghold.id;
+    let stronghold = await HtmlUtilities.runQuerySync(StrongholdQueries.SELECT_STRONGHOLD_BY_ID_AND_USER_ID, [stronghold_id, idToken.sub]);
+    if (_.isNullOrUndefined(stronghold)) {
+        throw new Error("Couldn't find Stronghold to delete with id: " + stronghold_id);
+    }
+    HtmlUtilities.sendQuery(res, StrongholdQueries.DELETE_STRONGHOLD_BY_ID, [stronghold_id]);
+});
+
+export const StrongholdRepository = {
+    getStronghold,
+    putStronghold,
+    postStronghold,
+    deleteStronghold
+}
