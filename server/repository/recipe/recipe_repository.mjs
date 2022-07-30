@@ -1,41 +1,50 @@
-export const SELECT_RECIPE_BY_USER_ID = `
-    SELECT s.*, u.name as owner_name
-    FROM recipe s LEFT join stronghold_user u on u.id = s.owner_id
-    WHERE s.owner_id = $1
-    ORDER BY s.id
-`;
+import { RecipeQueries } from "./recipe_queries.mjs";
+import { Authentication } from "../authentication/Authentication.mjs";
+import { HtmlUtilities } from "../commons/HtmlUtilities.mjs";
+import { IdGenerator } from "../commons/IdGenerator.mjs";
+import { FormulaNodeRepository } from "./formula_node_repository.mjs";
+import _ from "../commons/UnderscoreMixin.mjs";
 
-export const UPDATE_RECIPE = `
-    UPDATE recipe
-    SET name = $2, scenario_id = $3
-    WHERE id = $1 AND owner_id = $4
-`;
+const getRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    HtmlUtilities.sendQuery(res, RecipeQueries.SELECT_RECIPE_BY_USER_ID, [idToken.sub]);
+});
 
-export const UPDATE_RECIPE_FORMULA_NODE_ID = `
-    UPDATE recipe
-    SET formula_id = $3
-    WHERE id = $1 AND owner_id = $2
-`
+const postRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    HtmlUtilities.sendQuery(res, RecipeQueries.CREATE_RECIPE, [IdGenerator.uuidv4(), req.body.name, idToken.sub]);
+});
 
-export const SELECT_RECIPE_BY_ID_AND_USER_ID = `
-    SELECT *
-    FROM recipe
-    WHERE id = $1 AND owner_id = $2
-    ORDER BY id
-`;
+const putRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    let recipe = req.body.recipe;
+    await HtmlUtilities.runQuerySync(RecipeQueries.UPDATE_RECIPE, [recipe.id, recipe.name, recipe.scenario_id, idToken.sub]);
+    await FormulaNodeRepository.upsertFormula(pool, IdGenerator.uuidv4, recipe, idToken);
+    res.send("OK");
+});
 
-export const CREATE_RECIPE = "INSERT INTO public.recipe(id, name, owner_id) VALUES ($1, $2, $3);";
+const deleteRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    const recipe_id = req.body.recipe.id;
+    let recipe = await HtmlUtilities.runQuerySync(RecipeQueries.SELECT_RECIPE_BY_ID_AND_USER_ID, [recipe_id, idToken.sub]).rows[0];
+    if (_.isNullOrUndefined(recipe)) {
+        throw new Error("Could not find recipe to delete with id: " + recipe_id);
+    }
+    const formula_id = recipe.formula_id;
+    await HtmlUtilities.runQuerySync(RecipeQueries.DELETE_RECIPE_BY_ID, [recipe_id]);
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        let rootNode = await deleteFormulaNode(client, formula_id, idToken);
+        await client.query('COMMIT')
+        client.release();
+        res.send("OK");
+    } catch (e) {
+        await client.query('ROLLBACK')
+        client.release();
+        throw new Error("Error while deleting formula_node", e);
+    }
+})
 
-export const DELETE_RECIPE_BY_ID = `
-    DELETE FROM recipe
-    WHERE id = $1
-`;
-
-export const RECIPE_REPOSITORY = {
-    SELECT_RECIPE_BY_USER_ID,
-    SELECT_RECIPE_BY_ID_AND_USER_ID,
-    UPDATE_RECIPE,
-    CREATE_RECIPE,
-    DELETE_RECIPE_BY_ID,
-    UPDATE_RECIPE_FORMULA_NODE_ID
+export const RecipeRepository = {
+    getRecipe,
+    postRecipe,
+    putRecipe,
+    deleteRecipe
 }

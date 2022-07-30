@@ -13,7 +13,7 @@ const { Pool } = db.adapters.createPg();
 const pool = new Pool({ max: 200 });
 let backup;
 
-const logger = new Logger('formula_node_repository.test.js');
+const logger = new Logger(true, 'formula_node_repository.test.js');
 
 const isNullOrUndefined = function(obj) {
     return _.isNull(obj) || _.isUndefined(obj);

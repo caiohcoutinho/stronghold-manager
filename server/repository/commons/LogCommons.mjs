@@ -1,27 +1,29 @@
 import _ from 'underscore';
 
-const log = function(classLabel, logLevel, logLabel, object) {
-    let header = "[" + classLabel + "][" + logLevel + "][" + logLabel + "]";
+const log = function(classLabel, logLevel, object) {
+    let header = classLabel + "[" + +logLevel + "]";
     console.log(header + ": " + (_.isString(object) ? object : JSON.stringify(object)));
 }
 
 export default class Logger {
-    constructor(classLabel, enabled) {
-        this.classLabel = classLabel;
+    constructor(enabled, ...labels) {
+        this.compiledLabel = _.reduce(labels, (memo, label) => {
+            return memo + "[" + label + "]";
+        }, "");
         this.enabled = _.isUndefined(enabled) || enabled == true;
     }
 
-    logDebug(logLabel, object) {
+    logDebug(object) {
         if (!this.enabled) return;
-        log(this.classLabel, "DEBUG", logLabel, object);
+        log(this.compiledLabel, "DEBUG", object);
     }
 
-    logError(logLabel, object) {
-        log(this.classLabel, "ERROR", logLabel, object);
+    logError(object) {
+        log(this.compiledLabel, "ERROR", object);
     }
 
-    logInfo(logLabel, object) {
+    logInfo(object) {
         if (!this.enabled) return;
-        log(this.classLabel, "INFO", logLabel, object);
+        log(this.compiledLabel, "INFO", object);
     }
 }

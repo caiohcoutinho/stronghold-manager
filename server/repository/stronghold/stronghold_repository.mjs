@@ -19,7 +19,7 @@ const postStronghold = Authentication.validateAuthenticatedNeverCache(async func
 
 const deleteStronghold = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
     let stronghold_id = req.body.stronghold.id;
-    let stronghold = await HtmlUtilities.runQuerySync(StrongholdQueries.SELECT_STRONGHOLD_BY_ID_AND_USER_ID, [stronghold_id, idToken.sub]);
+    let stronghold = await HtmlUtilities.runQuerySync(StrongholdQueries.SELECT_STRONGHOLD_BY_ID_AND_USER_ID, [stronghold_id, idToken.sub].rows[0]);
     if (_.isNullOrUndefined(stronghold)) {
         throw new Error("Couldn't find Stronghold to delete with id: " + stronghold_id);
     }

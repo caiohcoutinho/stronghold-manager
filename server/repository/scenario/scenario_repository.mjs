@@ -1,26 +1,34 @@
-export const SELECT_SCENARIO_BY_USER_ID = `
-    SELECT s.*, u.name as owner_name
-    FROM scenario s LEFT join stronghold_user u on u.id = s.owner_id
-    WHERE s.owner_id = $1
-    ORDER BY s.id
-`;
+import { Authentication } from "../authentication/Authentication.mjs";
+import { HtmlUtilities } from "../commons/HtmlUtilities.mjs";
+import _ from "../commons/UnderscoreMixin.mjs";
+import { ScenarioQueries } from "./scenario_queries.mjs";
+import { IdGenerator } from "../commons/IdGenerator.mjs";
 
-export const UPDATE_SCENARIO = `
-    UPDATE scenario
-    SET name = $2
-    WHERE id = $1 AND owner_id = $3
-`;
+const getScenario = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    HtmlUtilities.sendQuery(res, ScenarioQueries.SELECT_SCENARIO_BY_USER_ID, [idToken.sub]);
+});
 
-export const SELECT_SCENARIO_BY_ID_AND_USER_ID = `
-    SELECT *
-    FROM scenario
-    WHERE id = $1 AND owner_id = $2
-    ORDER BY id
-`;
+const postScenario = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    HtmlUtilities.sendQuery(res, ScenarioQueries.CREATE_SCENARIO, [IdGenerator.uuidv4(), req.body.name, idToken.sub]);
+});
 
-export const CREATE_SCENARIO = "INSERT INTO public.scenario(id, name, owner_id) VALUES ($1, $2, $3);";
+const putScenario = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    let scenario = req.body.scenario;
+    HtmlUtilities.sendQuery(res, ScenarioQueries.UPDATE_SCENARIO, [scenario.id, scenario.name, idToken.sub]);
+});
 
-export const DELETE_SCENARIO_BY_ID = `
-    DELETE FROM scenario
-    WHERE id = $1
-`;
+const deleteScenario = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    let scenario_id = req.body.scenario.id;
+    let scenario = await HtmlUtilities.runQuerySync(ScenarioQueries.SELECT_SCENARIO_BY_ID_AND_USER_ID, [scenario_id, idToken.sub]).rows[0];
+    if (_.isNullOrUndefined(scenario)) {
+        throw new Error("Could not find scenario do delete with id: " + scenario_id);
+    }
+    HtmlUtilities.sendQuery(res, ScenarioQueries.DELETE_SCENARIO_BY_ID, [scenario_id]);
+});
+
+export const ScenarioRepository = {
+    getScenario,
+    postScenario,
+    putScenario,
+    deleteScenario
+}

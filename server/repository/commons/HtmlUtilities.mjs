@@ -1,7 +1,7 @@
-import { Logger } from './LogCommons.mjs';
+import Logger from './LogCommons.mjs';
 import { HTML_UTILITIES_LOG_ENABLED } from './LogProperties.mjs';
 
-const logger = new Logger('HtmlUtilities', HTML_UTILITIES_LOG_ENABLED);
+const logger = new Logger(HTML_UTILITIES_LOG_ENABLED, 'HtmlUtilities');
 
 const setHeadersNeverCache = function(res) {
     res.header('Cache-Control', 'no-cache, no-store, must-revalidate');

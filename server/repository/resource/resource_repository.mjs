@@ -1,34 +1,36 @@
-export const SELECT_RESOURCE_BY_USER_ID = `
-    SELECT s.*, u.name as owner_name
-    FROM resource s LEFT join stronghold_user u on u.id = s.owner_id
-    WHERE s.owner_id = $1
-    ORDER BY s.id
-`;
+import { ResourceQueries } from "./resource_queries.mjs";
+import { Authentication } from "../authentication/Authentication.mjs";
+import { HtmlUtilities } from "../commons/HtmlUtilities.mjs";
+import { IdGenerator } from "../commons/IdGenerator.mjs";
+import _ from "../commons/UnderscoreMixin.mjs";
 
-export const UPDATE_RESOURCE = `
-    UPDATE resource
-    SET name = $3, scenario_id = $4, icon = $5, hex = $6, filter = $7
-    WHERE id = $1 AND owner_id = $2
-`;
+const getResource = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    HtmlUtilities.sendQuery(res, ResourceQueries.SELECT_RESOURCE_BY_USER_ID, [idToken.sub]);
+});
 
-export const SELECT_RESOURCE_BY_ID_AND_USER_ID = `
-    SELECT *
-    FROM resource
-    WHERE id = $1 AND owner_id = $2
-    ORDER BY id
-`;
+const postResource = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    HtmlUtilities.sendQuery(res, ResourceQueries.CREATE_RESOURCE, [IdGenerator.uuidv4(), req.body.name, idToken.sub]);
+});
 
-export const CREATE_RESOURCE = "INSERT INTO public.resource(id, name, owner_id) VALUES ($1, $2, $3);";
+const putResource = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    let resource = req.body.resource;
+    HtmlUtilities.sendQuery(res, ResourceQueries.UPDATE_RESOURCE, [resource.id, idToken.sub, resource.name, resource.scenario_id,
+        resource.icon, resource.hex, resource.filter
+    ]);
+});
 
-export const DELETE_RESOURCE_BY_ID = `
-    DELETE FROM resource
-    WHERE id = $1
-`;
+const deleteResource = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
+    const resource_id = req.body.resource.id;
+    let resource = await HtmlUtilities.runQuerySync(ResourceQueries.SELECT_RESOURCE_BY_ID_AND_USER_ID, [resource_id, idToken.sub]).rows[0];
+    if (_.isNullOrUndefined(resource)) {
+        throw new Error("Could not find resource to delete with id: " + resource_id);
+    }
+    HtmlUtilities.sendQuery(res, ResourceQueries.DELETE_RESOURCE_BY_ID, [resource_id]);
+})
 
-export const RESOURCE_REPOSITORY = {
-    SELECT_RESOURCE_BY_USER_ID,
-    UPDATE_RESOURCE,
-    SELECT_RESOURCE_BY_ID_AND_USER_ID,
-    CREATE_RESOURCE,
-    DELETE_RESOURCE_BY_ID
+export const ResourceRepository = {
+    getResource,
+    postResource,
+    putResource,
+    deleteResource
 }

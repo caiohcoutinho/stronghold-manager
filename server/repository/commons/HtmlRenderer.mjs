@@ -1,3 +1,6 @@
+import fs from 'fs';
+import _ from './UnderscoreMixin.mjs';
+
 export const htmlRenderer = function(path, view_options, callback) {
     let props = view_options.properties;
     let str = fs.readFileSync(path).toString();

@@ -1,7 +1,11 @@
 import jwt from 'jsonwebtoken';
-import { setHeadersNeverCache } from '../commons/HtmlUtilities.mjs';
+import { HtmlUtilities } from '../commons/HtmlUtilities.mjs';
 import _ from '../commons/UnderscoreMixin.mjs'
 import { UserRepository } from '../user/user_repository.mjs'
+import Logger from '../commons/LogCommons.mjs';
+import { AUTHENTICATION_LOG_ENABLED } from "../commons/LogProperties.mjs";
+
+const logger = new Logger(AUTHENTICATION_LOG_ENABLED, "Authentication");
 
 const verifyIdTokenWithKey = function(idToken, pub) {
     return jwt.verify(idToken, pub, {
@@ -65,14 +69,14 @@ const validateIdToken = async function(idToken) {
 }
 
 const validateAuthenticatedNeverCache = function(callback) {
-    return validateAuthenticatedNeverCache(callback, true);
+    return validateAuthenticated(callback, true);
 }
 
 const validateAuthenticated = function(callback, shouldNeverCache) {
     return function(req, res) {
         try {
             if (shouldNeverCache) {
-                setHeadersNeverCache(req);
+                HtmlUtilities.setHeadersNeverCache(req);
             }
             let idToken = req.session.parsedToken;
             if (!process.env.LOCAL && _.isNullOrUndefined(idToken)) {
