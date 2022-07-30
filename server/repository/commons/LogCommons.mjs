@@ -1,7 +1,7 @@
-import _ from 'underscore';
+import _ from './UnderscoreMixin.mjs';
 
-const log = function(classLabel, logLevel, object) {
-    let header = classLabel + "[" + +logLevel + "]";
+const log = function(compiledLabel, logLevel, object) {
+    let header = compiledLabel + "[" + logLevel + "]";
     console.log(header + ": " + (_.isString(object) ? object : JSON.stringify(object)));
 }
 
@@ -10,7 +10,7 @@ export default class Logger {
         this.compiledLabel = _.reduce(labels, (memo, label) => {
             return memo + "[" + label + "]";
         }, "");
-        this.enabled = _.isUndefined(enabled) || enabled == true;
+        this.enabled = _.isNullOrUndefined(enabled) || enabled == true;
     }
 
     logDebug(object) {

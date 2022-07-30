@@ -3,20 +3,29 @@ import { Authentication } from "../authentication/Authentication.mjs";
 import { HtmlUtilities } from "../commons/HtmlUtilities.mjs";
 import { IdGenerator } from "../commons/IdGenerator.mjs";
 import { FormulaNodeRepository } from "./formula_node_repository.mjs";
+import { Database } from "../commons/Database.mjs";
 import _ from "../commons/UnderscoreMixin.mjs";
 
 const getRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
     HtmlUtilities.sendQuery(res, RecipeQueries.SELECT_RECIPE_BY_USER_ID, [idToken.sub]);
 });
 
+const getRecipeById = async function(recipe_id, idToken) {
+    return (await HtmlUtilities.runQuerySync(RecipeQueries.SELECT_RECIPE_BY_ID_AND_USER_ID, [recipe_id, idToken.sub])).rows[0];
+};
+
 const postRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
     HtmlUtilities.sendQuery(res, RecipeQueries.CREATE_RECIPE, [IdGenerator.uuidv4(), req.body.name, idToken.sub]);
 });
 
+const updataRecipeFormulaNodeId = async function(recipe_id, idToken, formula_node_id) {
+    await HtmlUtilities.runQuerySync(RecipeQueries.UPDATE_RECIPE_FORMULA_NODE_ID, [recipe_id, idToken.sub, formula_node_id]);
+}
+
 const putRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
     let recipe = req.body.recipe;
     await HtmlUtilities.runQuerySync(RecipeQueries.UPDATE_RECIPE, [recipe.id, recipe.name, recipe.scenario_id, idToken.sub]);
-    await FormulaNodeRepository.upsertFormula(pool, IdGenerator.uuidv4, recipe, idToken);
+    await FormulaNodeRepository.upsertFormula(Database.getPool(), IdGenerator.uuidv4, recipe, idToken);
     res.send("OK");
 });
 
@@ -28,7 +37,7 @@ const deleteRecipe = Authentication.validateAuthenticatedNeverCache(async functi
     }
     const formula_id = recipe.formula_id;
     await HtmlUtilities.runQuerySync(RecipeQueries.DELETE_RECIPE_BY_ID, [recipe_id]);
-    const client = await pool.connect();
+    const client = await Database.getPool().connect();
     try {
         await client.query('BEGIN');
         let rootNode = await deleteFormulaNode(client, formula_id, idToken);
@@ -44,7 +53,9 @@ const deleteRecipe = Authentication.validateAuthenticatedNeverCache(async functi
 
 export const RecipeRepository = {
     getRecipe,
+    getRecipeById,
     postRecipe,
     putRecipe,
-    deleteRecipe
+    deleteRecipe,
+    updataRecipeFormulaNodeId
 }

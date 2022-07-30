@@ -1,7 +1,7 @@
 import { newDb } from "pg-mem";
-import _ from 'underscore';
-import fs, { fdatasync } from 'fs';
-import { upsertFormula } from '../server/repository/recipe/formula_node_repository.mjs';
+import _ from '../server/repository/commons/UnderscoreMixin.mjs';
+import fs from 'fs';
+import { FormulaNodeRepository } from '../server/repository/recipe/formula_node_repository.mjs';
 import Logger from '../server/repository/commons/LogCommons.mjs';
 
 import Path from 'path';
@@ -14,10 +14,6 @@ const pool = new Pool({ max: 200 });
 let backup;
 
 const logger = new Logger(true, 'formula_node_repository.test.js');
-
-const isNullOrUndefined = function(obj) {
-    return _.isNull(obj) || _.isUndefined(obj);
-}
 
 const insertStrongholdUser = async function(id, name, email, picture) {
     return await db.public.one("insert into stronghold_user(id, name, email, picture) values ('" + id + "','" + name + "', '" + email + "', '" + picture + "')");
@@ -63,11 +59,11 @@ beforeEach(() => {
 });
 
 test('upsertFormula is defined', () => {
-    expect(upsertFormula).toBeDefined();
+    expect(FormulaNodeRepository.upsertFormula).toBeDefined();
 });
 
 test('Simple recipe no formula', async() => {
-    await upsertFormula(pool, {
+    await FormulaNodeRepository.upsertFormula(pool, {
         id: '0',
         name: 'recipe'
     }, { sub: '0' });
@@ -78,7 +74,7 @@ test('Recipe add formula', async() => {
     insertGoofy();
     insertRecipe('0', 'recipe', 'goofy');
     insertResource('abcd1234', 'resource', 'goofy');
-    let node = await upsertFormula(pool, () => '12341234', {
+    let node = await FormulaNodeRepository.upsertFormula(pool, () => '12341234', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -99,17 +95,17 @@ test('Recipe add formula', async() => {
     client.release();
     expect(result).toBeDefined();
 
-    logger.logDebug(logLabel, "formula_node's = " + JSON.stringify(result));
+    logger.logDebug("formula_node's = " + JSON.stringify(result));
     expect(_.size(result)).toBe(1);
 
     let dbRow = result[0];
-    expect(isNullOrUndefined(dbRow)).toBe(false);
+    expect(_.isNullOrUndefined(dbRow)).toBe(false);
     expect(dbRow.node_id).toBe('12341234');
-    expect(isNullOrUndefined(dbRow.parent_id)).toBe(true);
+    expect(_.isNullOrUndefined(dbRow.parent_id)).toBe(true);
     expect(dbRow.owner_id).toBe('goofy');
     expect(dbRow.resource_id).toBe('abcd1234');
     expect(dbRow.node_type).toBe('resource');
-    expect(isNullOrUndefined(dbRow.quantity)).toBe(true);
+    expect(_.isNullOrUndefined(dbRow.quantity)).toBe(true);
 });
 
 test('Recipe remove formula: empty object', async() => {
@@ -117,7 +113,7 @@ test('Recipe remove formula: empty object', async() => {
     insertGoofy();
     await insertRecipe('0', 'recipe', 'goofy');
     insertResource('abcd1234', 'resource', 'goofy');
-    await upsertFormula(pool, () => '12341234', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12341234', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -129,20 +125,20 @@ test('Recipe remove formula: empty object', async() => {
         }
     }, { sub: 'goofy' });
 
-    logger.logDebug(logLabel, "After first insert, checking setup.");
+    logger.logDebug("After first insert, checking setup.");
 
     let client = await pool.connect();
     let result = await client.query('select * from recipe');
     client.release();
 
-    expect(isNullOrUndefined(result)).toBe(false);
-    expect(isNullOrUndefined(result.rows)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result.rows)).toBe(false);
 
     let rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
-    await upsertFormula(pool, () => '12341234', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12341234', {
         id: '0',
         name: 'recipe',
         formula: {}
@@ -151,7 +147,7 @@ test('Recipe remove formula: empty object', async() => {
     client = await pool.connect();
     result = await client.query('select * from formula_node');
     client.release();
-    expect(isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
     rows = result.rows;
     expect(_.isEmpty(rows)).toBe(true);
 });
@@ -161,7 +157,7 @@ test('Recipe remove formula: null object', async() => {
     insertGoofy();
     await insertRecipe('0', 'recipe', 'goofy');
     insertResource('abcd1234', 'resource', 'goofy');
-    await upsertFormula(pool, () => '12341234', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12341234', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -173,20 +169,20 @@ test('Recipe remove formula: null object', async() => {
         }
     }, { sub: 'goofy' });
 
-    logger.logDebug(logLabel, "After first insert, checking setup.");
+    logger.logDebug("After first insert, checking setup.");
 
     let client = await pool.connect();
     let result = await client.query('select * from recipe');
     client.release();
 
-    expect(isNullOrUndefined(result)).toBe(false);
-    expect(isNullOrUndefined(result.rows)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result.rows)).toBe(false);
 
     let rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
-    await upsertFormula(pool, () => '12341234', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12341234', {
         id: '0',
         name: 'recipe',
         formula: null
@@ -195,7 +191,7 @@ test('Recipe remove formula: null object', async() => {
     client = await pool.connect();
     result = await client.query('select * from formula_node');
     client.release();
-    expect(isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
     rows = result.rows;
     expect(_.isEmpty(rows)).toBe(true);
 });
@@ -206,7 +202,7 @@ test('Recipe update formula change node resource', async() => {
     await insertRecipe('0', 'recipe', 'goofy');
     insertResource('abcd1234', 'resource', 'goofy');
     insertResource('abcd5678', 'resource2', 'goofy');
-    await upsertFormula(pool, () => '12341234', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12341234', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -218,26 +214,26 @@ test('Recipe update formula change node resource', async() => {
         }
     }, { sub: 'goofy' });
 
-    logger.logDebug(logLabel, "After first insert, checking setup.");
+    logger.logDebug("After first insert, checking setup.");
 
     let client = await pool.connect();
     let result = await client.query('select * from recipe');
     client.release();
 
-    expect(isNullOrUndefined(result)).toBe(false);
-    expect(isNullOrUndefined(result.rows)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result.rows)).toBe(false);
     let rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
     let row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row)).toBe(false);
     expect(row.id).toBe('0');
     expect(row.formula_id).toBe('12341234');
 
-    logger.logDebug(logLabel, 'initial recipe created = ' + JSON.stringify(row));
+    logger.logDebug('initial recipe created = ' + JSON.stringify(row));
 
-    await upsertFormula(pool, () => '12345678', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12345678', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -252,13 +248,13 @@ test('Recipe update formula change node resource', async() => {
     client = await pool.connect();
     result = await client.query('select * from formula_node');
     client.release();
-    expect(isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
     rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
     row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row)).toBe(false);
     expect(row.resource_id).toBe('abcd5678');
 
 });
@@ -269,7 +265,7 @@ test('Recipe update formula change node type from resource to quantity', async()
     await insertRecipe('0', 'recipe', 'goofy');
     insertResource('abcd1234', 'resource', 'goofy');
     insertResource('abcd5678', 'resource2', 'goofy');
-    await upsertFormula(pool, () => '12341234', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12341234', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -281,26 +277,26 @@ test('Recipe update formula change node type from resource to quantity', async()
         }
     }, { sub: 'goofy' });
 
-    logger.logDebug(logLabel, "After first insert, checking setup.");
+    logger.logDebug("After first insert, checking setup.");
 
     let client = await pool.connect();
     let result = await client.query('select * from recipe');
     client.release();
 
-    expect(isNullOrUndefined(result)).toBe(false);
-    expect(isNullOrUndefined(result.rows)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result.rows)).toBe(false);
     let rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
     let row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row)).toBe(false);
     expect(row.id).toBe('0');
     expect(row.formula_id).toBe('12341234');
 
-    logger.logDebug(logLabel, 'initial recipe created = ' + JSON.stringify(row));
+    logger.logDebug('initial recipe created = ' + JSON.stringify(row));
 
-    await upsertFormula(pool, () => '12345678', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12345678', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -315,16 +311,16 @@ test('Recipe update formula change node type from resource to quantity', async()
     client = await pool.connect();
     result = await client.query('select * from formula_node');
     client.release();
-    expect(isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
     rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
     row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
-    expect(isNullOrUndefined(row.parent_id)).toBe(true);
+    expect(_.isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row.parent_id)).toBe(true);
     expect(row.owner_id).toBe('goofy');
-    expect(isNullOrUndefined(row.resource_id)).toBe(true);
+    expect(_.isNullOrUndefined(row.resource_id)).toBe(true);
     expect(row.node_type).toBe('quantity');
     expect(row.quantity).toBe(4);
 
@@ -336,7 +332,7 @@ test('Recipe update formula change quantity', async() => {
     await insertRecipe('0', 'recipe', 'goofy');
     insertResource('abcd1234', 'resource', 'goofy');
     insertResource('abcd5678', 'resource2', 'goofy');
-    await upsertFormula(pool, () => '12341234', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12341234', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -347,26 +343,26 @@ test('Recipe update formula change quantity', async() => {
         }
     }, { sub: 'goofy' });
 
-    logger.logDebug(logLabel, "After first insert, checking setup.");
+    logger.logDebug("After first insert, checking setup.");
 
     let client = await pool.connect();
     let result = await client.query('select * from formula_node');
     client.release();
 
-    expect(isNullOrUndefined(result)).toBe(false);
-    expect(isNullOrUndefined(result.rows)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result.rows)).toBe(false);
     let rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
     let row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row)).toBe(false);
     expect(row.node_id).toBe('12341234');
     expect(row.quantity).toBe(3);
 
-    logger.logDebug(logLabel, 'initial recipe created = ' + JSON.stringify(row));
+    logger.logDebug('initial recipe created = ' + JSON.stringify(row));
 
-    await upsertFormula(pool, () => '12345678', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12345678', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -380,16 +376,16 @@ test('Recipe update formula change quantity', async() => {
     client = await pool.connect();
     result = await client.query('select * from formula_node');
     client.release();
-    expect(isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
     rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
     row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
-    expect(isNullOrUndefined(row.parent_id)).toBe(true);
+    expect(_.isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row.parent_id)).toBe(true);
     expect(row.owner_id).toBe('goofy');
-    expect(isNullOrUndefined(row.resource_id)).toBe(true);
+    expect(_.isNullOrUndefined(row.resource_id)).toBe(true);
     expect(row.node_type).toBe('quantity');
     expect(row.quantity).toBe(4);
 
@@ -401,7 +397,7 @@ test('Recipe update formula change type from resource to AND and add children', 
     await insertRecipe('0', 'recipe', 'goofy');
     insertResource('abcd1234', 'resource', 'goofy');
     insertResource('abcd5678', 'resource2', 'goofy');
-    await upsertFormula(pool, () => '12341234', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12341234', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -412,27 +408,27 @@ test('Recipe update formula change type from resource to AND and add children', 
         }
     }, { sub: 'goofy' });
 
-    logger.logDebug(logLabel, "After first insert, checking setup.");
+    logger.logDebug("After first insert, checking setup.");
 
     let client = await pool.connect();
     let result = await client.query('select * from formula_node');
     client.release();
 
-    expect(isNullOrUndefined(result)).toBe(false);
-    expect(isNullOrUndefined(result.rows)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result.rows)).toBe(false);
     let rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
     let row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row)).toBe(false);
     expect(row.node_id).toBe('12341234');
     expect(row.resource_id).toBe('abcd1234');
 
-    logger.logDebug(logLabel, 'initial recipe created = ' + JSON.stringify(row));
+    logger.logDebug('initial recipe created = ' + JSON.stringify(row));
 
     let idCount = 10;
-    await upsertFormula(pool, () => idCount++, {
+    await FormulaNodeRepository.upsertFormula(pool, () => idCount++, {
         id: '0',
         name: 'recipe',
         formula: {
@@ -456,44 +452,44 @@ test('Recipe update formula change type from resource to AND and add children', 
     client = await pool.connect();
     result = await client.query('select * from formula_node where parent_id is null');
     client.release();
-    expect(isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
     rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
     row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
-    expect(isNullOrUndefined(row.parent_id)).toBe(true);
+    expect(_.isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row.parent_id)).toBe(true);
     expect(row.owner_id).toBe('goofy');
-    expect(isNullOrUndefined(row.resource_id)).toBe(true);
+    expect(_.isNullOrUndefined(row.resource_id)).toBe(true);
     expect(row.node_type).toBe('and');
-    expect(isNullOrUndefined(row.quantity)).toBe(true);
+    expect(_.isNullOrUndefined(row.quantity)).toBe(true);
 
     let parent_id = row.node_id;
 
     client = await pool.connect();
     result = await client.query('select * from formula_node where parent_id is not null');
     client.release();
-    expect(isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
     rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(2);
 
     row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row)).toBe(false);
     expect(row.parent_id).toBe(parent_id);
     expect(row.owner_id).toBe('goofy');
     expect(row.resource_id).toBe('abcd1234');
     expect(row.node_type).toBe('resource');
-    expect(isNullOrUndefined(row.quantity)).toBe(true);
+    expect(_.isNullOrUndefined(row.quantity)).toBe(true);
 
     row = rows[1];
-    expect(isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row)).toBe(false);
     expect(row.parent_id).toBe(parent_id);
     expect(row.owner_id).toBe('goofy');
     expect(row.resource_id).toBe('abcd5678');
     expect(row.node_type).toBe('resource');
-    expect(isNullOrUndefined(row.quantity)).toBe(true);
+    expect(_.isNullOrUndefined(row.quantity)).toBe(true);
 
 });
 
@@ -505,7 +501,7 @@ test.only('Recipe update formula change type from AND with children to resource'
     insertResource('abcd5678', 'resource2', 'goofy');
 
     let idCount = 10;
-    await upsertFormula(pool, () => idCount++, {
+    await FormulaNodeRepository.upsertFormula(pool, () => idCount++, {
         id: '0',
         name: 'recipe',
         formula: {
@@ -526,35 +522,35 @@ test.only('Recipe update formula change type from AND with children to resource'
         }
     }, { sub: 'goofy' });
 
-    logger.logDebug(logLabel, "After first insert, checking setup.");
+    logger.logDebug("After first insert, checking setup.");
 
     let client = await pool.connect();
     let result = await client.query('select * from formula_node where parent_id is null');
     client.release();
 
-    expect(isNullOrUndefined(result)).toBe(false);
-    expect(isNullOrUndefined(result.rows)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result.rows)).toBe(false);
     let rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
     let row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row)).toBe(false);
     expect(row.node_type).toBe('and');
 
     client = await pool.connect();
     result = await client.query('select * from formula_node where parent_id is not null');
     client.release();
 
-    expect(isNullOrUndefined(result)).toBe(false);
-    expect(isNullOrUndefined(result.rows)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result.rows)).toBe(false);
     rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(2);
 
-    logger.logDebug(logLabel, 'initial recipe created = ' + JSON.stringify(row));
+    logger.logDebug('initial recipe created = ' + JSON.stringify(row));
 
-    await upsertFormula(pool, () => '12341234', {
+    await FormulaNodeRepository.upsertFormula(pool, () => '12341234', {
         id: '0',
         name: 'recipe',
         formula: {
@@ -568,23 +564,23 @@ test.only('Recipe update formula change type from AND with children to resource'
     client = await pool.connect();
     result = await client.query('select * from formula_node where parent_id is null');
     client.release();
-    expect(isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
     rows = result.rows;
     expect(_.isEmpty(rows)).toBe(false);
     expect(_.size(rows)).toBe(1);
 
     row = rows[0];
-    expect(isNullOrUndefined(row)).toBe(false);
-    expect(isNullOrUndefined(row.parent_id)).toBe(true);
+    expect(_.isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row.parent_id)).toBe(true);
     expect(row.owner_id).toBe('goofy');
     expect(row.resource_id).toBe('abcd1234');
     expect(row.node_type).toBe('resource');
-    expect(isNullOrUndefined(row.quantity)).toBe(true);
+    expect(_.isNullOrUndefined(row.quantity)).toBe(true);
 
     client = await pool.connect();
     result = await client.query('select * from formula_node where parent_id is not null');
     client.release();
-    expect(isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result)).toBe(false);
     rows = result.rows;
     expect(_.isEmpty(rows)).toBe(true);
 

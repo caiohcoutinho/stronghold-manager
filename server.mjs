@@ -24,7 +24,7 @@ import { SERVER_ENABLED_LOG_ENABLED } from './server/repository/commons/LogPrope
 
 const app = express();
 
-const logger = new Logger(SERVER_ENABLED_LOG_ENABLED, 'server.mjs');
+const logger = new Logger(SERVER_ENABLED_LOG_ENABLED, 'Server');
 
 app.engine('html', htmlRenderer);
 
@@ -69,13 +69,13 @@ app.get('/', function(req, res) {
     res.render(path.join(__dirname, 'static/index.html'), { properties: { csrfToken: req.session.csrfToken } });
 });
 
-app.use(express.static(path.join(__dirname, 'static')));
-
-app.use('/favicon.ico', express.static('static/favicon.ico'));
-
 app.get('/components/profile/login.js', function(req, res) {
     res.sendFile(path.join(__dirname, 'static/components/profile/login' + (process.env.LOCAL ? '-local' : '') + '.js'));
 });
+
+app.use(express.static(path.join(__dirname, 'static')));
+
+app.use('/favicon.ico', express.static('static/favicon.ico'));
 
 app.post('/authenticate', Authentication.postAuthenticate);
 app.post('/logout', Authentication.postLogout);

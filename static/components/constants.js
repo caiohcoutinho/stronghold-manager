@@ -1,4 +1,4 @@
-let View = function(code, label){
+let View = function(code, label) {
     this.code = code;
     this.label = label;
 }
@@ -17,4 +17,4 @@ export const VIEWS = [DASHBOARD, SCENARIO, STRONGHOLD, RESOURCE, RECIPE, WORKER,
 
 export const ALERT_MAX_SIZE = 400;
 export const ALERT_FADE_TIME = 10 * 1000;
-export const TEXT_INPUT_THROTTLE = 3000;
+export const TEXT_INPUT_THROTTLE = 500;

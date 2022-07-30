@@ -1,5 +1,6 @@
 import Logger from './LogCommons.mjs';
 import { HTML_UTILITIES_LOG_ENABLED } from './LogProperties.mjs';
+import { Database } from './Database.mjs';
 
 const logger = new Logger(HTML_UTILITIES_LOG_ENABLED, 'HtmlUtilities');
 
@@ -29,7 +30,7 @@ const sendQuery = function(response, query, values) {
 }
 
 const runQuery = function(query, values, callback, errorCallback) {
-    return pool
+    return Database.getPool()
         .query(query, values)
         .then(res => {
             callback(res);
@@ -40,7 +41,7 @@ const runQuery = function(query, values, callback, errorCallback) {
 }
 
 const runQuerySync = async function(query, values) {
-    return await pool
+    return await Database.getPool()
         .query(query, values)
         .then(res => {
             return res;
