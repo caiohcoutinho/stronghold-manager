@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Stronhold Manager</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"> -->
     <style>
-        body { padding-top: 50px; }
+        body {
+            padding-top: 50px;
+        }
     </style>
     <link rel="stylesheet" href="./components/landing/landing.css">
     <link rel="stylesheet" href="./components/mainView/mainView.css">
@@ -27,11 +31,7 @@
 <script src="/lib/underscore-min.js"></script>
 <script src="/lib/vue-color.js"></script>
 <script type="importmap">
-{
-    "imports": {
-      "vue": "/lib/vue.esm-browser.js"
-    }
-  }
+    { "imports": { "vue": "/lib/vue.esm-browser.js" } }
 </script>
 
 <body class="body">
@@ -42,16 +42,7 @@
 </body>
 
 <script type="module">
-  const { createApp } = Vue;
-
-  import { createStrongStore } from './components/strongStore.js'
-
-  import Landing from './components/landing/landing.js'
-
-  const app = createApp(Landing);
-  const store = createStrongStore();
-  app.use(store);
-  app.mount('#app');
+    const { createApp } = Vue; import { createStrongStore } from './components/strongStore.js'; import Landing from './components/landing/landing.js'; const app = createApp(Landing); const store = createStrongStore(); app.use(store); app.mount('#app');
 </script>
 
 <body>

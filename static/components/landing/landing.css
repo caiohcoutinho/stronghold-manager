@@ -2,6 +2,12 @@
     color: white;
 }
 
+body.body input,
+body.body option,
+body.body select {
+    color: black;
+}
+
 body.body {
     padding: 0px;
 }
@@ -26,7 +32,9 @@ table.main-table td.layout-columns {
 
 li.selected {
     font-weight: bold;
-}td svg {
+}
+
+td svg {
     width: 16px;
     height: 16px;
 }
@@ -40,7 +48,6 @@ div.menu-bar {
     height: 80%;
     width: 90%;
     border-radius: 40px;
-
 }
 
 div.right-bar {
@@ -58,7 +65,7 @@ div.inner-menu-bar {
     padding-left: 10%;
 }
 
-li.viewLink span.viewLinkSpan:hover{
+li.viewLink span.viewLinkSpan:hover {
     color: #510A32;
     cursor: pointer;
 }

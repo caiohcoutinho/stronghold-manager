@@ -5,22 +5,17 @@ import { IdGenerator } from "../commons/IdGenerator.mjs";
 import { FormulaNodeRepository } from "./formula_node_repository.mjs";
 import { Database } from "../commons/Database.mjs";
 import _ from "../commons/UnderscoreMixin.mjs";
+import Logger from "../commons/LogCommons.mjs";
+
+const logger = new Logger(true, 'RecipeRepository');
 
 const getRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
-    HtmlUtilities.sendQuery(res, RecipeQueries.SELECT_RECIPE_BY_USER_ID, [idToken.sub]);
+    res.send(await findAllRecipeByUserId(idToken));
 });
-
-const getRecipeById = async function(recipe_id, idToken) {
-    return (await HtmlUtilities.runQuerySync(RecipeQueries.SELECT_RECIPE_BY_ID_AND_USER_ID, [recipe_id, idToken.sub])).rows[0];
-};
 
 const postRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
     HtmlUtilities.sendQuery(res, RecipeQueries.CREATE_RECIPE, [IdGenerator.uuidv4(), req.body.name, idToken.sub]);
 });
-
-const updataRecipeFormulaNodeId = async function(recipe_id, idToken, formula_node_id) {
-    await HtmlUtilities.runQuerySync(RecipeQueries.UPDATE_RECIPE_FORMULA_NODE_ID, [recipe_id, idToken.sub, formula_node_id]);
-}
 
 const putRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
     let recipe = req.body.recipe;
@@ -49,13 +44,28 @@ const deleteRecipe = Authentication.validateAuthenticatedNeverCache(async functi
         client.release();
         throw new Error("Error while deleting formula_node", e);
     }
-})
+});
+
+const findRecipeById = async function(recipe_id, idToken) {
+    logger.logDebug("[findRecipeById] recipe_id = " + recipe_id + " idToken.sub = " + idToken.sub);
+    return (await HtmlUtilities.runQuerySync(RecipeQueries.SELECT_RECIPE_BY_ID_AND_USER_ID, [recipe_id, idToken.sub])).rows[0];
+};
+
+const findAllRecipeByUserId = async function(idToken) {
+    return (await HtmlUtilities.runQuerySync(RecipeQueries.SELECT_RECIPE_BY_USER_ID, [idToken.sub])).rows[0];
+};
+
+const updataRecipeFormulaNodeId = async function(recipe_id, idToken, formula_node_id) {
+    await HtmlUtilities.runQuerySync(RecipeQueries.UPDATE_RECIPE_FORMULA_NODE_ID, [recipe_id, idToken.sub, formula_node_id]);
+}
 
 export const RecipeRepository = {
     getRecipe,
-    getRecipeById,
     postRecipe,
     putRecipe,
     deleteRecipe,
+
+    findRecipeById,
+    findAllRecipeByUserId,
     updataRecipeFormulaNodeId
 }

@@ -3,21 +3,24 @@ import { FORMULA_NODE_REPOSITORY_LOG_ENABLED } from '../../repository/commons/Lo
 import { FormulaNodeQueries } from './formula_node_repository_queries.mjs';
 import { RecipeRepository } from './recipe_repository.mjs';
 import _ from '../commons/UnderscoreMixin.mjs';
-import { ResourceRepository } from '../resource/resource_repository.mjs';
 import { Authentication } from '../authentication/Authentication.mjs';
+import { Database } from '../commons/Database.mjs';
 
 const loggerUpsertFormula = new Logger(FORMULA_NODE_REPOSITORY_LOG_ENABLED, 'FormulaNodeRepository', 'upsertFormula');
 
-const upsertFormula = async function(pool, idGenerator, recipe, idToken) {
+const upsertFormula = async function(idGenerator, recipe, idToken) {
     let formula = recipe.formula;
     let rootNode;
 
-    const client = await pool.connect()
+    const client = await Database.getPool().connect();
     try {
         await client.query('BEGIN');
 
         loggerUpsertFormula.logDebug("recipe = " + JSON.stringify(recipe));
-        let previous_recipe = RecipeRepository.getRecipeById(recipe.id, idToken);
+        let previous_recipe = RecipeRepository.findRecipeById(recipe.id, idToken);
+
+        loggerUpsertFormula.logDebug("all user recipes = " + JSON.stringify(await RecipeRepository.findAllRecipeByUserId(idToken)));
+
         loggerUpsertFormula.logDebug("previous_recipe = " + JSON.stringify(previous_recipe));
 
         RecipeRepository.updataRecipeFormulaNodeId(recipe.id, idToken, null);
