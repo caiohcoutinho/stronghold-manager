@@ -17,9 +17,7 @@ const upsertFormula = async function(idGenerator, recipe, idToken) {
         await client.query('BEGIN');
 
         loggerUpsertFormula.logDebug("recipe = " + JSON.stringify(recipe));
-        let previous_recipe = RecipeRepository.findRecipeById(recipe.id, idToken);
-
-        loggerUpsertFormula.logDebug("all user recipes = " + JSON.stringify(await RecipeRepository.findAllRecipeByUserId(idToken)));
+        let previous_recipe = await RecipeRepository.findRecipeById(recipe.id, idToken);
 
         loggerUpsertFormula.logDebug("previous_recipe = " + JSON.stringify(previous_recipe));
 

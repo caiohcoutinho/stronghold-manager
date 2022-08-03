@@ -66,10 +66,10 @@ test('upsertFormula is defined', () => {
 });
 
 test('Simple recipe no formula', async() => {
-    await FormulaNodeRepository.upsertFormula({
+    await FormulaNodeRepository.upsertFormula(() => '12341234', {
         id: '0',
         name: 'recipe'
-    }, { sub: '0' });
+    }, { sub: 'goofy' });
 });
 
 test('Recipe add formula', async() => {
@@ -496,7 +496,7 @@ test('Recipe update formula change type from resource to AND and add children', 
 
 });
 
-test.only('Recipe update formula change type from AND with children to resource', async() => {
+test('Recipe update formula change type from AND with children to resource', async() => {
     const logLabel = 'Recipe update formula change type from AND with children to resource';
     insertGoofy();
     await insertRecipe('0', 'recipe', 'goofy');

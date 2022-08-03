@@ -47,12 +47,12 @@ const deleteRecipe = Authentication.validateAuthenticatedNeverCache(async functi
 });
 
 const findRecipeById = async function(recipe_id, idToken) {
-    logger.logDebug("[findRecipeById] recipe_id = " + recipe_id + " idToken.sub = " + idToken.sub);
+    logger.logDebug("[findRecipeById] recipe_id = " + recipe_id + ", idToken.sub = " + idToken.sub);
     return (await HtmlUtilities.runQuerySync(RecipeQueries.SELECT_RECIPE_BY_ID_AND_USER_ID, [recipe_id, idToken.sub])).rows[0];
 };
 
 const findAllRecipeByUserId = async function(idToken) {
-    return (await HtmlUtilities.runQuerySync(RecipeQueries.SELECT_RECIPE_BY_USER_ID, [idToken.sub])).rows[0];
+    return (await HtmlUtilities.runQuerySync(RecipeQueries.SELECT_RECIPE_BY_USER_ID, [idToken.sub])).rows;
 };
 
 const updataRecipeFormulaNodeId = async function(recipe_id, idToken, formula_node_id) {
