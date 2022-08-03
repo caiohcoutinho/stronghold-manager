@@ -57,9 +57,9 @@ export default {
             this.selectedRecipe = recipe;
             let formula_id = recipe.formula_id;
             if (formula_id == null) {
-                this.formula = { id: 'Root', count: 0 };
+                this.formula = { node_id: 'Root', count: 0 };
             } else {
-                this.formula = await this.$store.dispatch('loadFormula', formula_id);
+                this.formula = await this.$store.dispatch('loadFormula', recipe);
             }
             this.previousFormula = JSON.stringify(this.formula);
             this.modal = new bootstrap.Modal(document.getElementById('formulaEdition'));

@@ -596,3 +596,139 @@ test('Recipe update formula change type from AND with children to resource', asy
     expect(_.isEmpty(rows)).toBe(true);
 
 });
+
+test('Recipe update formula change child resource', async() => {
+    const logLabel = 'Recipe update formula change child resource';
+    insertGoofy();
+    await insertRecipe('0', 'recipe', 'goofy');
+    insertResource('abcd1234', 'resource', 'goofy');
+    insertResource('abcd5678', 'resource2', 'goofy');
+
+    let idCount = 10;
+    await FormulaNodeRepository.upsertFormula(() => idCount++, {
+        id: '0',
+        name: 'recipe',
+        formula: {
+            node_id: '0',
+            node_type: 'and',
+            parent_id: null,
+            children: [{
+                    node_id: '0',
+                    node_type: 'resource',
+                    resource_id: 'abcd1234'
+                },
+                {
+                    node_id: '1',
+                    node_type: 'resource',
+                    resource_id: 'abcd5678'
+                }
+            ]
+        }
+    }, { sub: 'goofy' });
+
+    logger.logDebug("After first insert, checking setup.");
+
+    let client = await pool.connect();
+    let result = await client.query('select * from formula_node where parent_id is null');
+    client.release();
+
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result.rows)).toBe(false);
+    let rows = result.rows;
+    expect(_.isEmpty(rows)).toBe(false);
+    expect(_.size(rows)).toBe(1);
+
+    let row = rows[0];
+    expect(_.isNullOrUndefined(row)).toBe(false);
+    expect(row.node_type).toBe('and');
+
+    client = await pool.connect();
+    result = await client.query('select * from formula_node where parent_id is not null');
+    client.release();
+
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    expect(_.isNullOrUndefined(result.rows)).toBe(false);
+    rows = result.rows;
+    logger.logDebug("rows = " + JSON.stringify(rows));
+    expect(_.isEmpty(rows)).toBe(false);
+    expect(_.size(rows)).toBe(2);
+
+    let formulaNodeId0 = rows[0].node_id;
+    let formulaNodeId1 = rows[1].node_id;
+
+    client = await pool.connect();
+    result = await client.query('select * from recipe');
+    client.release();
+
+    row = result.rows[0];
+    logger.logDebug('initial recipe created = ' + JSON.stringify(row));
+    let recipe_id = row.id;
+
+    idCount = 20;
+    await FormulaNodeRepository.upsertFormula(() => idCount++, {
+        id: '0',
+        name: 'recipe',
+        formula: {
+            node_id: '0',
+            node_type: 'and',
+            parent_id: null,
+            children: [{
+                    node_id: formulaNodeId0,
+                    node_type: 'resource',
+                    resource_id: 'abcd1234'
+                },
+                {
+                    node_id: formulaNodeId1,
+                    node_type: 'resource',
+                    resource_id: 'abcd1234'
+                }
+            ]
+        }
+    }, { sub: 'goofy' });
+
+    client = await pool.connect();
+    result = await client.query('select * from formula_node where parent_id is null');
+    client.release();
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    rows = result.rows;
+    logger.logDebug("rows = " + JSON.stringify(rows));
+    expect(_.isEmpty(rows)).toBe(false);
+    expect(_.size(rows)).toBe(1);
+
+    row = rows[0];
+    expect(_.isNullOrUndefined(row)).toBe(false);
+    expect(_.isNullOrUndefined(row.parent_id)).toBe(true);
+    expect(row.owner_id).toBe('goofy');
+    expect(row.node_type).toBe('and');
+    expect(_.isNullOrUndefined(row.resource_id)).toBe(true);
+    expect(_.isNullOrUndefined(row.quantity)).toBe(true);
+
+    let parent_id = row.node_id;
+
+    client = await pool.connect();
+    result = await client.query('select * from formula_node where parent_id is not null');
+    client.release();
+    expect(_.isNullOrUndefined(result)).toBe(false);
+    rows = result.rows;
+    logger.logDebug("rows = " + JSON.stringify(rows));
+    expect(_.isEmpty(rows)).toBe(false);
+    expect(_.size(rows)).toBe(2);
+
+    row = rows[0];
+    expect(_.isNullOrUndefined(row)).toBe(false);
+    expect(row.parent_id).toBe(parent_id);
+    expect(row.owner_id).toBe('goofy');
+    expect(row.resource_id).toBe('abcd1234');
+    expect(row.node_type).toBe('resource');
+    expect(_.isNullOrUndefined(row.quantity)).toBe(true);
+
+    row = rows[1];
+    expect(_.isNullOrUndefined(row)).toBe(false);
+    expect(row.parent_id).toBe(parent_id);
+    expect(row.owner_id).toBe('goofy');
+    expect(row.resource_id).toBe('abcd1234');
+    expect(row.node_type).toBe('resource');
+    expect(_.isNullOrUndefined(row.quantity)).toBe(true);
+
+
+});

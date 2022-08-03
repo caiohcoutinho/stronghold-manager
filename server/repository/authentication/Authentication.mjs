@@ -73,7 +73,7 @@ const validateAuthenticatedNeverCache = function(callback) {
 }
 
 const validateAuthenticated = function(callback, shouldNeverCache) {
-    return function(req, res) {
+    return async function(req, res) {
         try {
             if (shouldNeverCache) {
                 HtmlUtilities.setHeadersNeverCache(req);
@@ -84,7 +84,7 @@ const validateAuthenticated = function(callback, shouldNeverCache) {
                 res.send("Unauthorized");
             } else {
                 res.setHeader('Content-Type', 'application/json');
-                callback(req, res, idToken);
+                await callback(req, res, idToken);
             }
         } catch (err) {
             logger.logError(err);

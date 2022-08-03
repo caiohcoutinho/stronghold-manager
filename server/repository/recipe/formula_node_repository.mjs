@@ -118,7 +118,7 @@ const upsertFormulaNode = async function(client, idGenerator, root_node_id, pare
         return upsertFormulaNode(client, idGenerator, root_node_id, node.node_id, child, idToken);
     }));
 
-    loggerUpsertFormulaNode.logDebug("Node created. Returning.")
+    loggerUpsertFormulaNode.logDebug("Node created. Returning. node_id: " + node.node_id);
     return node;
 }
 

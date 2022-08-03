@@ -20,13 +20,13 @@ const postRecipe = Authentication.validateAuthenticatedNeverCache(async function
 const putRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
     let recipe = req.body.recipe;
     await HtmlUtilities.runQuerySync(RecipeQueries.UPDATE_RECIPE, [recipe.id, recipe.name, recipe.scenario_id, idToken.sub]);
-    await FormulaNodeRepository.upsertFormula(Database.getPool(), IdGenerator.uuidv4, recipe, idToken);
+    await FormulaNodeRepository.upsertFormula(IdGenerator.uuidv4, recipe, idToken);
     res.send("OK");
 });
 
 const deleteRecipe = Authentication.validateAuthenticatedNeverCache(async function(req, res, idToken) {
     const recipe_id = req.body.recipe.id;
-    let recipe = await HtmlUtilities.runQuerySync(RecipeQueries.SELECT_RECIPE_BY_ID_AND_USER_ID, [recipe_id, idToken.sub]).rows[0];
+    let recipe = (await HtmlUtilities.runQuerySync(RecipeQueries.SELECT_RECIPE_BY_ID_AND_USER_ID, [recipe_id, idToken.sub])).rows[0];
     if (_.isNullOrUndefined(recipe)) {
         throw new Error("Could not find recipe to delete with id: " + recipe_id);
     }
@@ -42,7 +42,7 @@ const deleteRecipe = Authentication.validateAuthenticatedNeverCache(async functi
     } catch (e) {
         await client.query('ROLLBACK')
         client.release();
-        throw new Error("Error while deleting formula_node", e);
+        throw new Error("Error while deleting formula_node: formula_id = " + formula_id, { cause: e });
     }
 });
 
